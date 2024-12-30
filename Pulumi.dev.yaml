@@ -1,0 +1,3 @@
+encryptionsalt: v1:xH3GnQ23gj4=:v1:wiL6mYkxrmF9SqXn:/nxLzVuwxB60dJRk7YBd6FdDhXfz/w==
+config:
+  kubernetes:context: local

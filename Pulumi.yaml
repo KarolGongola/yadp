@@ -1,0 +1,11 @@
+name: yadp
+description: Yet Another Data Platform - Kubernetes based data platform built from open source components
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: kubernetes-python
