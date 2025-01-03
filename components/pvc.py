@@ -1,18 +1,22 @@
-
 from pathlib import Path
 
+import pulumi
 import pulumi_kubernetes as kubernetes
 
+from config import config
 
-def create_pvc(namespace_name: str, 
-               volume_size: str,
-               storage_class_name: str,
-               pvc_name: str,
-               local_persistence_dir: str | None = None,
-               pv_name: str | None = None,
-               policy: str = "Retain"):
+
+def create_pvc(
+    namespace_name: str,
+    volume_size: str,
+    storage_class_name: str,
+    pvc_name: str,
+    local_persistence_dir: str | None = None,
+    pv_name: str | None = None,
+    policy: str = "Retain",
+) -> kubernetes.core.v1.PersistentVolumeClaim:
     """
-    Function resposible for creating PVC for resources which data should remain even if the resource is deleted.
+    Function resposible for creating PVC for resources which data should retain even if the resource is deleted.
     For local testing like on k3s it is responsible to create proper PV as well.
     """
 
@@ -39,9 +43,9 @@ def create_pvc(namespace_name: str,
             ),
         )
 
-
-    pvc = kubernetes.core.v1.PersistentVolumeClaim(
+    return kubernetes.core.v1.PersistentVolumeClaim(
         pvc_name,
+        opts=pulumi.ResourceOptions(protect=config.protect_persisted_resources),
         metadata=kubernetes.meta.v1.ObjectMetaArgs(
             name=pvc_name,
             namespace=namespace_name,
@@ -55,5 +59,3 @@ def create_pvc(namespace_name: str,
             volume_name=pv.metadata["name"] if local_persistence_dir else None,
         ),
     )
-
-    return pvc

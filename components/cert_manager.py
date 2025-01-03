@@ -1,6 +1,6 @@
-
 import pulumi
 import pulumi_kubernetes as kubernetes
+
 from config import config
 
 # We assume that cert manager namespace exists with root ca secret

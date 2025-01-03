@@ -1,15 +1,16 @@
-import os
 from pathlib import Path
+
 import pulumi
 import pulumi_kubernetes as kubernetes
 
-from config import config
-from components.pvc import create_pvc
 from components.cert_manager import cluster_issuer
 from components.ingress_controller import ingress_controller
+from components.pvc import create_pvc
+from config import config
 
-
-local_export_import_path = str(Path(config.local_persistence_dir) / "keycloak_realms") if config.local_persistence_dir else None
+local_export_import_path = (
+    str(Path(config.local_persistence_dir) / "keycloak_realms") if config.local_persistence_dir else None
+)
 import_export_volume_size = "1Gi"
 
 
@@ -17,7 +18,7 @@ keycloak_ns = kubernetes.core.v1.Namespace(
     config.keycloak_ns_name,
     metadata=kubernetes.meta.v1.ObjectMetaArgs(
         name=config.keycloak_ns_name,
-    )
+    ),
 )
 
 
@@ -32,7 +33,7 @@ import_export_pvc = create_pvc(
 
 
 keycloak_release = kubernetes.helm.v3.Release(
-    opts=pulumi.ResourceOptions(depends_on=[ingress_controller, cluster_issuer]), 
+    opts=pulumi.ResourceOptions(depends_on=[ingress_controller, cluster_issuer]),
     resource_name=config.keycloak_name,
     name=config.keycloak_name,
     chart="oci://registry-1.docker.io/bitnamicharts/keycloak",
@@ -58,13 +59,7 @@ keycloak_release = kubernetes.helm.v3.Release(
             "adminUser": config.keycloak_admin_login,
             "adminPassword": config.keycloak_admin_password,
         },
-        "extraEnvVars": [
-            # For recovery from exported file
-            # {
-            #     "name": "KEYCLOAK_EXTRA_ARGS",
-            #     "value": "--import-realm",
-            # },
-        ],
+        "extraEnvVars": config.keycloak_extraEnvVars,
         "extraVolumes": [
             {
                 "name": "import-export-volume",
@@ -83,14 +78,14 @@ keycloak_release = kubernetes.helm.v3.Release(
                 "mountPath": "/opt/bitnami/keycloak/data/import",
             },
         ],
-        # Disablle cache and change readOnlyRootFilesystem to False just to be able to export realms
-        # https://github.com/bitnami/charts/issues/13105#issuecomment-1375422340
-        "cache": {
-            "enabled": False
-        },
-        "containerSecurityContext": {
-            "readOnlyRootFilesystem": False,
-        },
+        # # Disablle cache and change readOnlyRootFilesystem to False just to be able to export realms
+        # # https://github.com/bitnami/charts/issues/13105#issuecomment-1375422340
+        # "cache": {
+        #     "enabled": False
+        # },
+        # "containerSecurityContext": {
+        #     "readOnlyRootFilesystem": False,
+        # },
     },
     version="24.3.2",
     skip_crds=False,

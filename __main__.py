@@ -3,5 +3,6 @@
 from components import (
     cert_manager,
     ingress_controller,
-    keycloak
+    keycloak,
+    keycloak_iam,
 )

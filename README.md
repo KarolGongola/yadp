@@ -10,6 +10,7 @@ Below I will describe how I have prepared my setup. It is not generic instructio
 ### Common
 * Linux terminal. I am using Ubuntu for running pulumi commands.
 * Kubernetes with credentials saved to proper contexts in file which path is in `KUBECONFIG`. In my case `local` for local dev k3s k8s and and `eagle` for homelab k8s.
+* pulumi installed -> https://www.pulumi.com/docs/iac/download-install/
 * Reuse existing or create new pulumi stacks and configure them to use proper kubernetes context:
     ```bash
     pulumi stack select homelab
@@ -33,15 +34,12 @@ Below I will describe how I have prepared my setup. It is not generic instructio
 * ClusterIssuer with letsencrypt ACME in `cert-manager` namespace.
 * Make sure that traffic from domain (`https://yadp.xyz`) will be routed to homelab k8s nginx ingress controller
 * Prepare storageclass for PVCs. I have truenas core server connected to k8s with [democratic-csi](https://github.com/democratic-csi/democratic-csi)
-* Ability to create LoadBalancer service. E.g. installed metallb.
+* Ability to create LoadBalancer service. E.g. installed metallb with ip pool created.
 
 ### For local dev k8s
-* To mimic DNS server locally, put all hostnames in `/etc/hosts` like this:
+* To mimic DNS server locally, put following line in `/etc/hosts`:
     ```bash
-    YOUR_IP_ADDRESS    trino.k3s.localhost
-    YOUR_IP_ADDRESS    polaris.k3s.localhost
-    YOUR_IP_ADDRESS    keycloak.k3s.localhost
-    ...
+    YOUR_IP_ADDRESS(non localhost)    *.yadp.localhost
     ```
 * Pass your loacal /etc/hosts to coredens (to let applications inside k8s to resolve your locally defined hostnames)
     * Mount /etc/hosts to coredns pod
@@ -108,7 +106,7 @@ Below I will describe how I have prepared my setup. It is not generic instructio
         ```
 
 ## Create or update platform setup
-* When starting new terminal, run init script to use local backend file
+* When starting new terminal, run init script to use local backend file and to load secrets as env variables.
     ```bash
     source ./init-pulumi.sh
     ```
