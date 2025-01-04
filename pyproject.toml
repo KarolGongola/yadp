@@ -40,7 +40,7 @@ target-version = "py312"
 # Rules details https://docs.astral.sh/ruff/rules/
 select = ["F", "C", "E", "R", "W", "I", "N", "ANN", "ASYNC", "S", "FBT", "B", "A", "COM", "C4", "DTZ", "EXE", "INP", "PIE", "T20", "PYI", "PT", "Q", "RET",
 "SIM", "TID", "TC", "ARG", "PTH", "PD", "NPY", "FAST", "AIR", "PERF", "FURB", "DOC", "RUF"]
-ignore = []
+ignore = ["COM812"]
 # Per-file ignores
 per-file-ignores = {"__main__.py" = ["F401"]}
 

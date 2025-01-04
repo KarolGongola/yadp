@@ -13,6 +13,7 @@ class Config:
     realm_display_name: str = "Yet Another Data Platform"
     protect_persisted_resources: bool = True
     root_ca_secret_name: str = "root-ca"  # noqa: S105
+    root_ca_path: str = None
     storage_class_name: str = None
     local_persistence_dir: str = None
     cert_manager_ns_name: str = "cert-manager"
@@ -24,6 +25,16 @@ class Config:
     keycloak_ns_name: str = "keycloak"
     keycloak_name: str = "keycloak"
     keycloak_extraEnvVars: list = field(default_factory=list)  # noqa: N815 Mixed case variable name
+    admin_users: list[str] = field(
+        default_factory=lambda: [
+            "karol_gongola@gmail.com",
+        ]
+    )
+    trusted_guest_users: list[str] = field(
+        default_factory=lambda: [
+            "gongola.karol@gmail.com",
+        ]
+    )
 
     @property
     def keycloak_url(self) -> str:
@@ -34,6 +45,7 @@ class Config:
 class LocalConfig(Config):
     domain_name: str = "yadp.localhost"
     protect_persisted_resources: bool = False
+    root_ca_path: str = "/usr/local/share/ca-certificates/yadp-rootCA.crt"
     storage_class_name: str = "local-path"
     local_persistence_dir: str = field(default_factory=Path("~/yadp_k3s_persistence_dir").expanduser)
     keycloak_extraEnvVars: list = field(  # noqa: N815 Mixed case variable name

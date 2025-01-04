@@ -1,23 +1,12 @@
 import pulumi
 import pulumi_keycloak as keycloak
 
-from components.keycloak import keycloak_release
 from config import config
-
-master_keycloak_provider = keycloak.Provider(
-    opts=pulumi.ResourceOptions(depends_on=[keycloak_release]),
-    resource_name="master_keycloak_provider",
-    url=f"https://{config.keycloak_url}",
-    realm="master",
-    client_id="admin-cli",
-    client_timeout=300,
-    username=config.keycloak_admin_login,
-    password=config.keycloak_admin_password,
-)
+from keycloak_iam.provider import master_provider
 
 main_realm = keycloak.Realm(
     resource_name=config.realm_name,
-    opts=pulumi.ResourceOptions(provider=master_keycloak_provider),
+    opts=pulumi.ResourceOptions(provider=master_provider),
     realm=config.realm_name,
     enabled=True,
     display_name=config.realm_display_name,
@@ -76,7 +65,7 @@ main_realm = keycloak.Realm(
 # Update user profile for realm
 user_profile = keycloak.RealmUserProfile(
     resource_name="user-profile",
-    opts=pulumi.ResourceOptions(provider=master_keycloak_provider),
+    opts=pulumi.ResourceOptions(provider=master_provider),
     realm_id=main_realm.realm,
     attributes=[
         {
@@ -121,34 +110,3 @@ user_profile = keycloak.RealmUserProfile(
         },
     ],
 )
-
-github_identity_provider = keycloak.oidc.IdentityProvider(
-    resource_name="github",
-    opts=pulumi.ResourceOptions(provider=master_keycloak_provider),
-    realm=main_realm.realm,
-    alias="github",
-    provider_id="github",
-    display_name="GitHub",
-    enabled=True,
-    trust_email=True,
-    first_broker_login_flow_alias="first broker login",
-    authorization_url="https://github.com/login/oauth/authorize",
-    token_url="https://github.com/login/oauth/access_token",  # noqa: S106 Possible hardcoded password assigned to argument
-    client_id=config.github_app_client_id,
-    client_secret=config.github_app_client_secret,
-    disable_user_info=True,
-    default_scopes="user:email",
-)
-
-# guest_test_user = keycloak.User(
-#     resource_name="guest-test",
-#     opts=pulumi.ResourceOptions(provider=master_keycloak_provider),
-#     realm_id=main_realm.realm,
-#     username="guest-test",
-#     email="guest-test@example.com",
-#     enabled=True,
-#     default_password={
-#         "value": config.keycloak_guest_test_password,
-#         "temporary": False
-#     },
-# )
