@@ -4,6 +4,7 @@ from components import (
     cert_manager,
     ingress_controller,
     keycloak,
+    trino,
 )
 from keycloak_iam import (
     client,

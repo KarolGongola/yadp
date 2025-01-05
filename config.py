@@ -12,7 +12,8 @@ class Config:
     realm_name: str = "yadp"
     realm_display_name: str = "Yet Another Data Platform"
     protect_persisted_resources: bool = True
-    root_ca_secret_name: str = "root-ca"  # noqa: S105
+    log_level: str = "info"
+    root_ca_secret_name: str = None
     root_ca_path: str = None
     storage_class_name: str = None
     local_persistence_dir: str = None
@@ -25,9 +26,11 @@ class Config:
     keycloak_ns_name: str = "keycloak"
     keycloak_name: str = "keycloak"
     keycloak_extraEnvVars: list = field(default_factory=list)  # noqa: N815 Mixed case variable name
+    trino_ns_name: str = "trino"
+    trino_name: str = "trino"
     admin_users: list[str] = field(
         default_factory=lambda: [
-            "karol_gongola@gmail.com",
+            "karol.gongola@gmail.com",
         ]
     )
     trusted_guest_users: list[str] = field(
@@ -40,11 +43,18 @@ class Config:
     def keycloak_url(self) -> str:
         return f"keycloak.{self.domain_name}"
 
+    @property
+    def trino_hostname(self) -> str:
+        return f"trino.{self.domain_name}"
+
 
 @dataclass(kw_only=True)
 class LocalConfig(Config):
     domain_name: str = "yadp.localhost"
+    k8s_context: str = "local"
     protect_persisted_resources: bool = False
+    log_level: str = "debug"
+    root_ca_secret_name: str = "root-ca"  # noqa: S105 Possible hardcoded password
     root_ca_path: str = "/usr/local/share/ca-certificates/yadp-rootCA.crt"
     storage_class_name: str = "local-path"
     local_persistence_dir: str = field(default_factory=Path("~/yadp_k3s_persistence_dir").expanduser)
@@ -80,6 +90,7 @@ class LocalConfig(Config):
 @dataclass(kw_only=True)
 class HomelabConfig(Config):
     domain_name: str = "yadp.xyz"
+    k8s_context: str = "eagle"
     storage_class_name: str = "freenas-iscsi-csi"
     cluster_issuer_spec: dict = field(
         default_factory=lambda: {

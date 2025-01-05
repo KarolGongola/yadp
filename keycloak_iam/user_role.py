@@ -12,5 +12,8 @@ assign_roles_to_exiting_users(
     users=config.trusted_guest_users,
 )
 assign_roles_to_exiting_users(
-    realm_id=main_realm.realm, provider=master_provider, role_ids=[admin_role.id], users=config.admin_users
+    realm_id=main_realm.realm,
+    provider=master_provider,
+    role_ids=[admin_role.id],
+    users=config.admin_users,
 )
