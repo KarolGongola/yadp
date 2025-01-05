@@ -83,18 +83,6 @@ trino_release = helm.Release(
             f"io.trino.server.security.oauth2={config.log_level.upper()}",
             f"io.trino.server.ui.OAuth2WebUiAuthenticationFilter={config.log_level.upper()}",
         ],
-        # "catalogs":{
-        #     "mypolaris": f"""
-        #         connector.name=iceberg
-        #         iceberg.catalog.type=rest
-        #         iceberg.rest-catalog.uri=https://{polaris_hostname}/api/catalog/
-        #         iceberg.rest-catalog.security=OAUTH2
-        #         iceberg.rest-catalog.oauth2.credential={polaris_oauth2_credential}
-        #         iceberg.rest-catalog.oauth2.scope=PRINCIPAL_ROLE:ALL
-        #         iceberg.rest-catalog.warehouse=s3_catalog
-        #         iceberg.rest-catalog.vended-credentials-enabled=true
-        #         """
-        # },
         "coordinator": {
             "additionalJVMConfig": [
                 "-Djavax.net.ssl.trustStore=etc/certs/root-ca.pem",
