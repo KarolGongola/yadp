@@ -11,7 +11,6 @@ ingress_ns = kubernetes.core.v1.Namespace(
     ),
 )
 
-
 ingress_controller = kubernetes.helm.v3.Release(
     resource_name=config.ingress_controller_name,
     opts=pulumi.ResourceOptions(depends_on=[cluster_issuer]),
@@ -25,8 +24,6 @@ ingress_controller = kubernetes.helm.v3.Release(
     version="4.11.4",
 )
 
-
-# Create an Ingress resource to handle the redirection
 default_domain_ingress_name = "default-domain-redirect"
 default_domain_ingress = kubernetes.networking.v1.Ingress(
     resource_name=default_domain_ingress_name,

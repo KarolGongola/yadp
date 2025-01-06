@@ -3,8 +3,6 @@ import pulumi_kubernetes as kubernetes
 
 from config import config
 
-# We assume that cert manager namespace exists with root ca secret
-
 cert_manager = kubernetes.helm.v3.Release(
     resource_name=config.cert_manager_name,
     name=config.cert_manager_name,

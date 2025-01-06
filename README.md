@@ -1,9 +1,30 @@
 # Yet Another Data Platform
-Kubernetes based data platform built from open source components. The idea is to build data platform which uses only basic functionalities from provider like s3, k8s, storageclass. With this assumption it could be running at any cloud (not only 3 largest) as well as at on-prem kubernetes.
+Kubernetes based data platform built from open source components. The idea is to build data platform which uses only basic functionalities from provider like k8s, storageclass, s3. With this assumption it could be running at any cloud as well as at on-prem kubernetes.
 
-In this repo you can see how to run it at local kubernetes (k3s) and at my hybrid homelab kubernetes (OCI + local VMs). My homelab setup you can see (with guest permissions) at [yadp.xyz](https://yadp.xyz)
+In this repo you can see how to run it at local kubernetes (k3s) and at my hybrid homelab kubernetes (OCI + local VMs). My homelab setup you can see (with guest permissions) at [https://yadp.xyz](https://yadp.xyz)
 
 Below I will describe how I have prepared my setup. It is not generic instruction, so you can modify whatever you wish or replicaty my approach.
+
+
+## Components
+
+### For now it includes:
+* Keycloak
+* Trino
+### Planned:
+* Airflow
+* Iceberg catalog (e.g. Apache Polaris)
+* Minio
+* Spark with custom scheduler (e.g. Apache Unicorn)
+* Kafka
+* Flink
+* data vizualization (e.g. Apache Superset)
+* SQL editor (e.g. CloudBeaver)
+* IDE (Jupyter or VS Code)
+* monitoring (Prometheus + Grafana)
+* backups (Velero?)
+* lineage (e.g. Marquez)
+* artifactory (e.g. Nexus)
 
 ## Prerequisities
 

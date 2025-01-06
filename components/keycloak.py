@@ -5,14 +5,13 @@ import pulumi_kubernetes as kubernetes
 
 from components.cert_manager import cluster_issuer
 from components.ingress_controller import ingress_controller
-from components.pvc import create_pvc
 from config import config
+from utils.pulumi import create_pvc
 
 local_export_import_path = (
     str(Path(config.local_persistence_dir) / "keycloak_realms") if config.local_persistence_dir else None
 )
 import_export_volume_size = "1Gi"
-
 
 keycloak_ns = kubernetes.core.v1.Namespace(
     config.keycloak_ns_name,
@@ -20,7 +19,6 @@ keycloak_ns = kubernetes.core.v1.Namespace(
         name=config.keycloak_ns_name,
     ),
 )
-
 
 import_export_pvc = create_pvc(
     namespace_name=config.keycloak_ns_name,
@@ -30,7 +28,6 @@ import_export_pvc = create_pvc(
     local_persistence_dir=local_export_import_path,
     pv_name="import-export-pv",
 )
-
 
 keycloak_release = kubernetes.helm.v3.Release(
     opts=pulumi.ResourceOptions(depends_on=[ingress_controller, cluster_issuer]),
