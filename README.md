@@ -3,7 +3,7 @@ Kubernetes based data platform built from open source components. The idea is to
 
 In this repo you can see how to run it at local kubernetes (k3s) and at my hybrid homelab kubernetes (OCI + local VMs). My homelab setup you can see (with guest permissions) at [https://yadp.xyz](https://yadp.xyz)
 
-Below I will describe how I have prepared my setup. It is not generic instruction, so you can modify whatever you wish or replicaty my approach.
+Below you can find description of how I have prepared my setup. It is not generic instruction, so you can modify whatever you wish or replicaty my approach.
 
 
 ## Components
