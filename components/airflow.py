@@ -155,30 +155,34 @@ airflow_release = helm.Release(
                     },
                 }
             ]
-            + [
-                {
-                    "name": "certs-volume",
-                    "configMap": {
-                        "name": certs_configmap_name,
-                    },
-                }
-            ]
-            if config.root_ca_secret_name
-            else [],
+            + (
+                [
+                    {
+                        "name": "certs-volume",
+                        "configMap": {
+                            "name": certs_configmap_name,
+                        },
+                    }
+                ]
+                if config.root_ca_secret_name
+                else []
+            ),
             "extraVolumeMounts": [
                 {
                     "name": "create-roles-script",
                     "mountPath": "/etc/scripts",
                 }
             ]
-            + [
-                {
-                    "name": "certs-volume",
-                    "mountPath": "/etc/airflow/certs",
-                }
-            ]
-            if config.root_ca_secret_name
-            else [],
+            + (
+                [
+                    {
+                        "name": "certs-volume",
+                        "mountPath": "/etc/airflow/certs",
+                    }
+                ]
+                if config.root_ca_secret_name
+                else []
+            ),
         },
         "executor": "CeleryExecutor",
         "workers": {
