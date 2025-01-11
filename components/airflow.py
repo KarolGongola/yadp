@@ -8,13 +8,10 @@ import pulumi_kubernetes.helm.v3 as helm
 from components.cert_manager import cluster_issuer
 from components.keda import keda_release
 from config import config
-from keycloak_iam.client import airflow_client, airflow_client_id
-from keycloak_iam.role import airflow_admin_role_name, airflow_viewer_role_name
+from keycloak_iam.client import airflow_client
+from utils.airflow import airflow_roles_to_create, celery_executor_keda_query, get_webserver_config
 from utils.k8s import get_decoded_root_cert
 from utils.pulumi import create_pvc
-
-airflow_db_volume_size = "8Gi"
-local_airflow_db_dir = "airflow_db"
 
 namespace = kubernetes.core.v1.Namespace(
     resource_name=config.airflow_ns_name,
@@ -25,11 +22,35 @@ namespace = kubernetes.core.v1.Namespace(
 
 airflow_db_pvc = create_pvc(
     namespace_name=config.airflow_ns_name,
-    volume_size=airflow_db_volume_size,
+    volume_size="8Gi",
     storage_class_name=config.storage_class_name,
     pvc_name="airflow-db-pvc",
-    local_persistence_dir=local_airflow_db_dir,
+    persistence_dir="airflow_db",
     pv_name="airflow-db-pv",
+)
+
+role_creation_script_config_map_name = "role-creation-script"
+role_creation_script_config_map = kubernetes.core.v1.ConfigMap(
+    resource_name=f"{config.airflow_ns_name}-{role_creation_script_config_map_name}",
+    metadata={
+        "name": role_creation_script_config_map_name,
+        "namespace": namespace.metadata["name"],
+    },
+    data={
+        "create-roles.sh": dedent(f"""
+        #!/bin/bash
+        ROLES=("{'", "'.join(airflow_roles_to_create)}")
+
+        for ROLE_NAME in "${{ROLES[@]}}"; do
+            if ! airflow roles list | grep -q "$ROLE_NAME"; then
+                airflow roles create "$ROLE_NAME"
+                echo "Role '$ROLE_NAME' created."
+            else
+                echo "Role '$ROLE_NAME' already exists."
+            fi
+        done
+    """).strip()
+    },
 )
 
 gitsync_secret_name = "gitsync-token"  # noqa: S105 Possible hardcoded password assigned
@@ -43,99 +64,6 @@ gitsync_secret = kubernetes.core.v1.Secret(
         "GITSYNC_PASSWORD": base64.b64encode(config.airflow_gitsync_token.encode()).decode(),
     },
 )
-
-
-def get_webserver_config(client_secret: str) -> str:
-    return str(
-        dedent(f"""
-        import os
-        import jwt
-        import requests
-        import logging
-        from base64 import b64decode
-        from cryptography.hazmat.primitives import serialization
-        from flask_appbuilder.security.manager import AUTH_DB, AUTH_OAUTH
-        from airflow import configuration as conf
-        from airflow.www.security import AirflowSecurityManager
-
-        log = logging.getLogger(__name__)
-
-        AUTH_TYPE = AUTH_OAUTH
-        AUTH_USER_REGISTRATION = True
-        AUTH_ROLES_SYNC_AT_LOGIN = True
-        AUTH_USER_REGISTRATION_ROLE = "Public"
-        OIDC_ISSUER = "https://{config.keycloak_url}/realms/{config.realm_name}"
-
-        # Make sure you create these role on Keycloak
-        AUTH_ROLES_MAPPING = {{
-            "{airflow_viewer_role_name}": ["Viewer"],
-            "{airflow_admin_role_name}": ["Admin"],
-            #"User": ["User"],
-            #"Public": ["Public"],
-            #"Op": ["Op"],
-        }}
-
-        OAUTH_PROVIDERS = [
-            {{
-                "name": "keycloak",
-                "icon": "fa-key",
-                "token_key": "access_token",
-                "remote_app": {{
-                    "client_id": "{airflow_client_id}",
-                    "client_secret": "{client_secret}",
-                    "server_metadata_url": "https://{config.keycloak_url}/realms/{config.realm_name}/.well-known/openid-configuration",
-                    "api_base_url": "https://{config.keycloak_url}/realms/{config.realm_name}/protocol/openid-connect",
-                    "client_kwargs": {{"scope": "email profile"}},
-                    "access_token_url": "https://{config.keycloak_url}/realms/{config.realm_name}/protocol/openid-connect/token",
-                    "authorize_url": "https://{config.keycloak_url}/realms/{config.realm_name}/protocol/openid-connect/auth",
-                    "request_token_url": None,
-                }},
-            }}
-        ]
-
-        # Fetch public key
-        req = requests.get(OIDC_ISSUER)
-        key_der_base64 = req.json()["public_key"]
-        key_der = b64decode(key_der_base64.encode())
-        public_key = serialization.load_der_public_key(key_der)
-
-
-        class CustomSecurityManager(AirflowSecurityManager):
-            def get_oauth_user_info(self, provider, response):
-                if provider == "keycloak":
-                    token = response["access_token"]
-                    me = jwt.decode(token, public_key, algorithms=["HS256", "RS256"], options={{"verify_aud": False}})
-                    log.debug("me: {{0}}".format(me))
-
-                    # Extract roles from resource access
-                    realm_access = me.get("realm_access", {{}})
-                    groups = realm_access.get("roles", [])
-
-                    log.info("groups: {{0}}".format(groups))
-
-                    if not groups:
-                        groups = [AUTH_USER_REGISTRATION_ROLE]
-
-                    userinfo = {{
-                        "username": me.get("preferred_username"),
-                        "email": me.get("email"),
-                        "first_name": me.get("given_name"),
-                        "last_name": me.get("family_name"),
-                        "role_keys": groups,
-                    }}
-
-                    log.info("user info: {{0}}".format(userinfo))
-
-                    return userinfo
-                else:
-                    return {{}}
-
-
-        # Make sure to replace this with your own implementation of AirflowSecurityManager class
-        SECURITY_MANAGER_CLASS = CustomSecurityManager
-        """).strip()
-    )
-
 
 if config.root_ca_secret_name:
     certs_configmap_name = "certs-configmap"
@@ -160,6 +88,9 @@ airflow_release = helm.Release(
         "config": {
             "scheduler": {
                 "min_file_process_interval": 60  # Set your desired interval here
+            },
+            "celery": {
+                "worker_concurrency": 8,
             },
         },
         "postgresql": {
@@ -193,11 +124,17 @@ airflow_release = helm.Release(
             "useHelmHooks": False,
             "applyCustomEnv": False,
         },
+        "webserverSecretKey": config.airflow_webserwer_secret_key,
         "webserver": {
             "webserverConfig": airflow_client.client_secret.apply(get_webserver_config),
             "defaultUser": {
                 "enabled": False,
             },
+            "args": [
+                "bash",
+                "-c",
+                "cp /etc/scripts/create-roles.sh ./ && chmod +x ./create-roles.sh && ./create-roles.sh && exec airflow webserver",
+            ],
             "env": [
                 {
                     "name": "REQUESTS_CA_BUNDLE",
@@ -212,6 +149,14 @@ airflow_release = helm.Release(
             else [],
             "extraVolumes": [
                 {
+                    "name": "create-roles-script",
+                    "configMap": {
+                        "name": role_creation_script_config_map_name,
+                    },
+                }
+            ]
+            + [
+                {
                     "name": "certs-volume",
                     "configMap": {
                         "name": certs_configmap_name,
@@ -221,6 +166,12 @@ airflow_release = helm.Release(
             if config.root_ca_secret_name
             else [],
             "extraVolumeMounts": [
+                {
+                    "name": "create-roles-script",
+                    "mountPath": "/etc/scripts",
+                }
+            ]
+            + [
                 {
                     "name": "certs-volume",
                     "mountPath": "/etc/airflow/certs",
@@ -235,9 +186,10 @@ airflow_release = helm.Release(
             "keda": {
                 "enabled": True,
                 "pollingInterval": 10,
-                "cooldownPeriod": 30,
+                "cooldownPeriod": 60,
                 "minReplicaCount": 0,
                 "maxReplicaCount": 10,
+                "query": celery_executor_keda_query,
             },
             "resources": {
                 "requests": {
@@ -254,6 +206,19 @@ airflow_release = helm.Release(
                 "storageClassName": config.storage_class_name,
             },
         },
+        "scheduler": {
+            "replicas": 1,
+            "resources": {
+                "requests": {
+                    "cpu": "250m",
+                    "memory": "512Mi",
+                },
+                "limits": {
+                    "cpu": "1",
+                    "memory": "2Gi",
+                },
+            },
+        },
         "triggerer": {
             "replicas": 1,
             # "keda": {},
@@ -264,7 +229,7 @@ airflow_release = helm.Release(
             "keda": {
                 "enabled": True,
                 "pollingInterval": 10,
-                "cooldownPeriod": 30,
+                "cooldownPeriod": 60,
                 "minReplicaCount": 0,
                 "maxReplicaCount": 2,
             },
@@ -295,13 +260,14 @@ airflow_release = helm.Release(
                 },
             },
         },
-        "logs": {
-            "persistence": {
-                "enabled": config.airflow_persistence_enabled,
-                "size": "16Gi",
-                "storageClassName": config.storage_class_name,
-            },
-        },
+        # Disabled because my storageclass does not support ReadWriteMany, TODO: set logs at s3 or other system
+        # "logs": {
+        #     "persistence": {
+        #         "enabled": config.airflow_persistence_enabled,
+        #         "size": "16Gi",
+        #         "storageClassName": config.storage_class_name,
+        #     },
+        # },
         "dags": {
             "persistence": {
                 "enabled": config.airflow_persistence_enabled,

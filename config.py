@@ -101,6 +101,10 @@ class LocalConfig(Config):
     def github_app_client_secret(self) -> str:
         return os.getenv("LOCAL_GITHUB_APP_CLIENT_SECRET")
 
+    @property
+    def airflow_webserwer_secret_key(self) -> str:
+        return os.getenv("LOCAL_AIRFLOW_WEBSERVER_SECRET_KEY")
+
 
 @dataclass(kw_only=True)
 class HomelabConfig(Config):
@@ -143,6 +147,10 @@ class HomelabConfig(Config):
     @property
     def github_app_client_secret(self) -> str:
         return os.getenv("HOMELAB_GITHUB_APP_CLIENT_SECRET")
+
+    @property
+    def airflow_webserwer_secret_key(self) -> str:
+        return os.getenv("HOMELAB_AIRFLOW_WEBSERVER_SECRET_KEY")
 
 
 pulumi_stack = pulumi.get_stack()

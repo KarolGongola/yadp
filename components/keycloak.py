@@ -4,9 +4,6 @@ from components.cert_manager import cluster_issuer
 from config import config
 from utils.pulumi import create_pvc
 
-import_export_volume_size = "1Gi"
-local_export_import_dir = "keycloak_realms"
-
 keycloak_ns = kubernetes.core.v1.Namespace(
     config.keycloak_ns_name,
     metadata=kubernetes.meta.v1.ObjectMetaArgs(
@@ -16,10 +13,10 @@ keycloak_ns = kubernetes.core.v1.Namespace(
 
 import_export_pvc = create_pvc(
     namespace_name=config.keycloak_ns_name,
-    volume_size=import_export_volume_size,
+    volume_size="1Gi",
     storage_class_name=config.storage_class_name,
     pvc_name="import-export-pvc",
-    local_persistence_dir=local_export_import_dir,
+    persistence_dir="keycloak_realms",
     pv_name="import-export-pv",
 )
 
