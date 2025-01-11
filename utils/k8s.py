@@ -1,10 +1,12 @@
 import base64
+from functools import lru_cache
 
 import kubernetes
 
 from config import config
 
 
+@lru_cache
 def get_decoded_root_cert() -> str:
     kubernetes.config.load_kube_config(context=config.k8s_context)
     v1 = kubernetes.client.CoreV1Api()

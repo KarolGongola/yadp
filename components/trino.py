@@ -1,11 +1,9 @@
 import json
 
-import pulumi
 import pulumi_kubernetes as kubernetes
 import pulumi_kubernetes.helm.v3 as helm
 
 from components.cert_manager import cluster_issuer
-from components.ingress_controller import ingress_controller
 from config import config
 from keycloak_iam.client import trino_client, trino_client_id
 from utils.k8s import get_decoded_root_cert
@@ -20,8 +18,8 @@ namespace = kubernetes.core.v1.Namespace(
 if config.root_ca_secret_name:
     certs_configmap_name = "certs-configmap"
     root_ca_secret = kubernetes.core.v1.ConfigMap(
-        certs_configmap_name,
-        metadata=kubernetes.meta.v1.ObjectMetaArgs(namespace=config.trino_ns_name, name=certs_configmap_name),
+        resource_name=f"{config.trino_ns_name}-{certs_configmap_name}",
+        metadata=kubernetes.meta.v1.ObjectMetaArgs(namespace=namespace.metadata["name"], name=certs_configmap_name),
         data={
             "root-ca.pem": get_decoded_root_cert(),
         },
@@ -43,7 +41,6 @@ def get_coordinator_extra_config(client_secret: str) -> str:
 
 
 trino_release = helm.Release(
-    opts=pulumi.ResourceOptions(depends_on=[ingress_controller]),
     resource_name=config.trino_name,
     chart="trino",
     namespace=namespace.metadata["name"],

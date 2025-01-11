@@ -20,12 +20,16 @@ def create_pvc(
     For local testing like on k3s it is responsible to create proper PV as well.
     """
 
+    local_persistence_path = (
+        str(Path(config.local_persistence_dir) / local_persistence_dir) if config.local_persistence_dir else None
+    )
+
     # Create PV in case of using local storage - done for k3s tests
     # For production there should be csi responsible for creating pv based on pvc below
-    if local_persistence_dir:
+    if local_persistence_path:
         if not pv_name:
             raise ValueError("pv_name must be provided when using local_persistence_dir")
-        Path(local_persistence_dir).mkdir(parents=True, exist_ok=True)
+        Path(local_persistence_path).mkdir(parents=True, exist_ok=True)
         pv = kubernetes.core.v1.PersistentVolume(
             pv_name,
             metadata=kubernetes.meta.v1.ObjectMetaArgs(
@@ -38,7 +42,7 @@ def create_pvc(
                 persistent_volume_reclaim_policy=policy,
                 storage_class_name=storage_class_name,
                 host_path=kubernetes.core.v1.HostPathVolumeSourceArgs(
-                    path=local_persistence_dir,
+                    path=local_persistence_path,
                 ),
             ),
         )

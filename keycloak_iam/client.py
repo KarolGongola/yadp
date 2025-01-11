@@ -36,3 +36,20 @@ trino_client = keycloak.openid.Client(
         provider=master_provider,
     ),
 )
+
+airflow_client_id = "airflow"
+airflow_client = keycloak.openid.Client(
+    resource_name=airflow_client_id,
+    name="Airflow",
+    realm_id=main_realm.realm,
+    client_id=airflow_client_id,
+    access_type="CONFIDENTIAL",
+    standard_flow_enabled=True,
+    base_url=f"https://{config.airflow_hostname}",
+    root_url=f"https://{config.airflow_hostname}",
+    valid_redirect_uris=["/*"],
+    valid_post_logout_redirect_uris=["/*"],
+    opts=pulumi.ResourceOptions(
+        provider=master_provider,
+    ),
+)

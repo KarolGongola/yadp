@@ -92,3 +92,32 @@ trusted_guest_role = keycloak.Role(
         )
     ),
 )
+
+airflow_viewer_role_name = "airflow-viewer"
+airflow_viewer_role = keycloak.Role(
+    resource_name=airflow_viewer_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=airflow_viewer_role_name,
+    description="YADP Airflow Viewer",
+)
+
+airflow_admin_role_name = "airflow-admin"
+airflow_admin_role = keycloak.Role(
+    resource_name=airflow_admin_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=airflow_admin_role_name,
+    description="YADP Airflow Admin",
+)
+
+default_roles = keycloak.DefaultRoles(
+    resource_name="default-roles",
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    default_roles=[
+        "offline_access",
+        "uma_authorization",
+        airflow_viewer_role.name,
+    ],
+)
