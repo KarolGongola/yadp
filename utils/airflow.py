@@ -14,8 +14,8 @@ celery_executor_keda_query: str = dedent("""
     {{- end }}
     """).strip()
 
-trusted_viever_role_name = "Trusted Viewer"
-airflow_roles_to_create = [trusted_viever_role_name]
+trusted_viever_role_name: str = "Trusted Viewer"
+airflow_roles_to_create: list[str] = [trusted_viever_role_name]
 
 
 def get_webserver_config(client_secret: str) -> str:
@@ -42,7 +42,7 @@ def get_webserver_config(client_secret: str) -> str:
         AUTH_ROLES_MAPPING = {{
             "{airflow_viewer_role_name}": ["Viewer"],
             "{airflow_admin_role_name}": ["Admin"],
-            "{airflow_trusted_viewer_role_name}": ["{trusted_viever_role_name}", "Viewer"],
+            "{airflow_trusted_viewer_role_name}": ["{trusted_viever_role_name}"],
             #"User": ["User"],
             #"Public": ["Public"],
             #"Op": ["Op"],

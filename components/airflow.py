@@ -273,11 +273,12 @@ airflow_release = helm.Release(
         #     },
         # },
         "dags": {
-            "persistence": {
-                "enabled": config.airflow_persistence_enabled,
-                "size": "16Gi",
-                "storageClassName": config.storage_class_name,
-            },
+            # Disabled because my storageclass does not support ReadWriteMany
+            # "persistence": {
+            #     "enabled": config.airflow_persistence_enabled,
+            #     "size": "16Gi",
+            #     "storageClassName": config.storage_class_name,
+            # },
             "gitSync": {
                 "enabled": True,
                 "repo": config.airflow_dags_repo,
