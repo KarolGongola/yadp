@@ -11,8 +11,9 @@ Below you can find description of how I have prepared my setup. It is not generi
 ### For now it includes:
 * Keycloak
 * Trino
-### Planned:
 * Airflow
+### Planned:
+* monitoring (Prometheus + Grafana)
 * Iceberg catalog (e.g. Apache Polaris)
 * Minio
 * Spark with custom scheduler (e.g. Apache Unicorn)
@@ -21,9 +22,9 @@ Below you can find description of how I have prepared my setup. It is not generi
 * data vizualization (e.g. Apache Superset)
 * SQL editor (e.g. CloudBeaver)
 * IDE (Jupyter or VS Code)
-* monitoring (Prometheus + Grafana)
 * backups (Velero?)
 * lineage (e.g. Marquez)
+* logging
 * artifactory (e.g. Nexus)
 
 ## Prerequisities
