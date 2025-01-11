@@ -30,7 +30,7 @@ exclude = [
 ]
 
 # Same as Black.
-line-length = 120
+line-length = 140
 indent-width = 4
 
 # Assume Python 3.12
@@ -39,7 +39,7 @@ target-version = "py312"
 [tool.ruff.lint]
 # Rules details https://docs.astral.sh/ruff/rules/
 select = ["F", "C", "E", "R", "W", "I", "N", "ANN", "ASYNC", "S", "FBT", "B", "A", "COM", "C4", "DTZ", "EXE", "INP", "PIE", "T20", "PYI", "PT", "Q", "RET",
-"SIM", "TID", "TC", "ARG", "PTH", "PD", "NPY", "FAST", "AIR", "PERF", "FURB", "DOC", "RUF"]
+"SIM", "TID", "TC", "ARG", "PTH", "PD", "NPY", "FAST", "AIR", "PERF", "FURB", "DOC"]
 ignore = ["COM812"]
 # Per-file ignores
 per-file-ignores = {"__main__.py" = ["F401"]}

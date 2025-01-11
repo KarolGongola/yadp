@@ -1,8 +1,10 @@
 """Yet Another Data Platform IaaC entrypoint."""
 
 from components import (
+    airflow,
     cert_manager,
     ingress_controller,
+    keda,
     keycloak,
     trino,
 )

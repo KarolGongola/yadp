@@ -28,6 +28,15 @@ class Config:
     keycloak_extraEnvVars: list = field(default_factory=list)  # noqa: N815 Mixed case variable name
     trino_ns_name: str = "trino"
     trino_name: str = "trino"
+    keda_ns_name: str = "keda"
+    keda_name: str = "keda"
+    airflow_ns_name: str = "airflow"
+    airflow_name: str = "airflow"
+    airflow_persistence_enabled: bool = True
+    airflow_gitsync_token: str = field(default_factory=lambda: os.getenv("AIRFLOW_GITSYNC_TOKEN"))
+    airflow_dags_repo: str = "https://github.com/KarolGongola/yadp-dags.git"
+    airflow_dags_dir_sub_path: str = "dags"
+    airflow_dags_branch: str = "main"
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -47,6 +56,10 @@ class Config:
     def trino_hostname(self) -> str:
         return f"trino.{self.domain_name}"
 
+    @property
+    def airflow_hostname(self) -> str:
+        return f"airflow.{self.domain_name}"
+
 
 @dataclass(kw_only=True)
 class LocalConfig(Config):
@@ -59,8 +72,10 @@ class LocalConfig(Config):
     storage_class_name: str = "local-path"
     local_persistence_dir: str = field(default_factory=Path("~/yadp_k3s_persistence_dir").expanduser)
     keycloak_extraEnvVars: list = field(  # noqa: N815 Mixed case variable name
-        default_factory=list,
+        default_factory=list,  # Change to enable importing realms
     )
+    airflow_persistence_enabled: bool = False
+    airflow_dags_branch: str = "dev"
 
     @property
     def cluster_issuer_spec(self) -> dict:
@@ -85,6 +100,10 @@ class LocalConfig(Config):
     @property
     def github_app_client_secret(self) -> str:
         return os.getenv("LOCAL_GITHUB_APP_CLIENT_SECRET")
+
+    @property
+    def airflow_webserwer_secret_key(self) -> str:
+        return os.getenv("LOCAL_AIRFLOW_WEBSERVER_SECRET_KEY")
 
 
 @dataclass(kw_only=True)
@@ -128,6 +147,10 @@ class HomelabConfig(Config):
     @property
     def github_app_client_secret(self) -> str:
         return os.getenv("HOMELAB_GITHUB_APP_CLIENT_SECRET")
+
+    @property
+    def airflow_webserwer_secret_key(self) -> str:
+        return os.getenv("HOMELAB_AIRFLOW_WEBSERVER_SECRET_KEY")
 
 
 pulumi_stack = pulumi.get_stack()

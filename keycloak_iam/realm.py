@@ -108,5 +108,53 @@ user_profile = keycloak.RealmUserProfile(
                 ],
             },
         },
+        {
+            "name": "firstName",
+            "displayName": "${firstName}",
+            "validators": [
+                {
+                    "name": "length",
+                    "config": {
+                        "min": "3",
+                        "max": "255",
+                    },
+                },
+            ],
+            "requiredForRoles": ["user"],
+            "permissions": {
+                "view": [
+                    "admin",
+                    "user",
+                ],
+                "edit": [
+                    "admin",
+                    "user",
+                ],
+            },
+        },
+        {
+            "name": "lastName",
+            "displayName": "${lastName}",
+            "validators": [
+                {
+                    "name": "length",
+                    "config": {
+                        "min": "3",
+                        "max": "255",
+                    },
+                },
+            ],
+            "requiredForRoles": ["user"],
+            "permissions": {
+                "view": [
+                    "admin",
+                    "user",
+                ],
+                "edit": [
+                    "admin",
+                    "user",
+                ],
+            },
+        },
     ],
 )
