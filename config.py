@@ -37,6 +37,9 @@ class Config:
     airflow_dags_repo: str = "https://github.com/KarolGongola/yadp-dags.git"
     airflow_dags_dir_sub_path: str = "dags"
     airflow_dags_branch: str = "main"
+    minio_ns_name: str = "minio"
+    minio_name: str = "minio"
+
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -59,6 +62,10 @@ class Config:
     @property
     def airflow_hostname(self) -> str:
         return f"airflow.{self.domain_name}"
+
+    @property
+    def minio_hostname(self) -> str:
+        return f"minio.{self.domain_name}"
 
 
 @dataclass(kw_only=True)
