@@ -9,9 +9,12 @@ Below you can find description of how I have prepared my setup. It is not generi
 ## Components
 
 ### For now it includes:
+* Cert Manager -> Apache 2.0
+* Ingress Nginx -> Apache 2.0
 * Keycloak -> Apache 2.0
 * Trino -> Apache 2.0
 * Airflow -> Apache 2.0
+* KEDA -> Apache 2.0
 ### Planned:
 * Ceph/Rook -> LGPL/Apache 2.0
 * Prometheus -> Apache 2.0
