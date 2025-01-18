@@ -9,23 +9,30 @@ Below you can find description of how I have prepared my setup. It is not generi
 ## Components
 
 ### For now it includes:
-* Keycloak
-* Trino
-* Airflow
+* Keycloak -> Apache 2.0
+* Trino -> Apache 2.0
+* Airflow -> Apache 2.0
 ### Planned:
-* monitoring (Prometheus + Grafana)
-* Iceberg catalog (e.g. Apache Polaris)
-* Minio
-* Spark with custom scheduler (e.g. Apache Unicorn)
-* Kafka
-* Flink
-* data vizualization (e.g. Apache Superset)
-* SQL editor (e.g. CloudBeaver)
-* IDE (Jupyter or VS Code)
-* backups (Velero?)
-* lineage (e.g. Marquez)
-* logging
-* artifactory (e.g. Nexus)
+* Ceph/Rook -> LGPL/Apache 2.0
+* Prometheus -> Apache 2.0
+* Grafana -> AGPLv3
+* Fluentd -> Apache 2.0
+* VS Code -> MIT
+* Spark -> Apache 2.0
+* Apache Unicorn -> Apache 2.0
+* Kafka -> Apache 2.0
+* Flink -> Apache 2.0
+* Apache Superset -> Apache 2.0
+* Starrocks -> Apache 2.0
+* DataHub -> Apache 2.0
+### To consider:
+* Apache Polaris -> Apache 2.0
+* Lakekeeper -> Apache 2.0
+* Velero -> Apache 2.0
+* CloudBeaver -> Apache 2.0
+* Jupyter notebook -> BSD-3
+* Marquez -> Apache 2.0
+* artifactory
 
 ## Prerequisities
 
