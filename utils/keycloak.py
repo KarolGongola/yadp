@@ -28,9 +28,7 @@ def retry_on_503(retries: int = 3, delay: int = 2) -> Generator:
                 raise
 
 
-def get_oidc_client(
-    realm_id: str, client_id: str, keycloak_provider: keycloak.Provider
-) -> keycloak.openid.AwaitableGetClientResult:
+def get_oidc_client(realm_id: str, client_id: str, keycloak_provider: keycloak.Provider) -> keycloak.openid.AwaitableGetClientResult:
     with retry_on_503(retries=10, delay=5):
         return keycloak.openid.get_client(
             opts=pulumi.InvokeOptions(provider=keycloak_provider),
@@ -39,9 +37,7 @@ def get_oidc_client(
         )
 
 
-def get_client_role(
-    realm_id: str, client_id: str, role_name: str, keycloak_provider: keycloak.Provider
-) -> keycloak.AwaitableGetRoleResult:
+def get_client_role(realm_id: str, client_id: str, role_name: str, keycloak_provider: keycloak.Provider) -> keycloak.AwaitableGetRoleResult:
     return keycloak.get_role(
         opts=pulumi.InvokeOptions(provider=keycloak_provider),
         realm_id=realm_id,
@@ -50,21 +46,15 @@ def get_client_role(
     )
 
 
-def get_role_ids(
-    realm_id: str, roles: dict[str, list[str]], keycloak_provider: keycloak.Provider
-) -> Generator[str, None, None]:
+def get_role_ids(realm_id: str, roles: dict[str, list[str]], keycloak_provider: keycloak.Provider) -> Generator[str, None, None]:
     for client_name, role_names in roles.items():
         client_id = get_oidc_client(realm_id=realm_id, client_id=client_name, keycloak_provider=keycloak_provider).id
         for role_name in role_names:
-            role = get_client_role(
-                realm_id=realm_id, client_id=client_id, role_name=role_name, keycloak_provider=keycloak_provider
-            )
+            role = get_client_role(realm_id=realm_id, client_id=client_id, role_name=role_name, keycloak_provider=keycloak_provider)
             yield role.id
 
 
-def assign_roles_to_exiting_users(
-    realm_id: str, provider: keycloak.Provider, role_ids: list[str], users: list[str]
-) -> None:
+def assign_roles_to_exiting_users(realm_id: str, provider: keycloak.Provider, role_ids: list[str], users: list[str]) -> None:
     for username in users:
         try:
             user = keycloak.get_user(

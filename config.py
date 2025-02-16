@@ -15,7 +15,8 @@ class Config:
     log_level: str = "info"
     root_ca_secret_name: str = None
     root_ca_path: str = None
-    storage_class_name: str = None
+    storage_class_name: str = "rook-ceph-block"
+    bucket_storage_class_name: str = "rook-ceph-bucket"
     local_persistence_dir: str = None
     cert_manager_ns_name: str = "cert-manager"
     cert_manager_name: str = "cert-manager"
@@ -37,6 +38,10 @@ class Config:
     airflow_dags_repo: str = "https://github.com/KarolGongola/yadp-dags.git"
     airflow_dags_dir_sub_path: str = "dags"
     airflow_dags_branch: str = "main"
+    ceph_ns_name: str = "rook-ceph"
+    ceph_name: str = "ceph"
+    ceph_failure_domain: str = "host"
+    ceph_object_expiration_days: int = 30
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -60,6 +65,14 @@ class Config:
     def airflow_hostname(self) -> str:
         return f"airflow.{self.domain_name}"
 
+    @property
+    def ceph_dashboard_hostname(self) -> str:
+        return f"ceph.{self.domain_name}"
+
+    @property
+    def ceph_rgw_hostname(self) -> str:
+        return f"s3.{self.domain_name}"
+
 
 @dataclass(kw_only=True)
 class LocalConfig(Config):
@@ -69,13 +82,14 @@ class LocalConfig(Config):
     log_level: str = "debug"
     root_ca_secret_name: str = "root-ca"  # noqa: S105 Possible hardcoded password
     root_ca_path: str = "/usr/local/share/ca-certificates/yadp-rootCA.crt"
-    storage_class_name: str = "local-path"
     local_persistence_dir: str = field(default_factory=Path("~/yadp_k3s_persistence_dir").expanduser)
     keycloak_extraEnvVars: list = field(  # noqa: N815 Mixed case variable name
         default_factory=list,  # Change to enable importing realms
     )
     airflow_persistence_enabled: bool = False
     airflow_dags_branch: str = "dev"
+    ceph_failure_domain: str = "osd"
+    ceph_object_expiration_days: int = 1
 
     @property
     def cluster_issuer_spec(self) -> dict:
@@ -110,7 +124,6 @@ class LocalConfig(Config):
 class HomelabConfig(Config):
     domain_name: str = "yadp.xyz"
     k8s_context: str = "eagle"
-    storage_class_name: str = "freenas-iscsi-csi"
     cluster_issuer_spec: dict = field(
         default_factory=lambda: {
             "acme": {

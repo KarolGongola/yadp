@@ -69,6 +69,10 @@ Below you can find description of how I have prepared my setup. It is not generi
 * Ability to create LoadBalancer service. E.g. installed metallb with ip pool created.
 
 ### For local dev k8s
+* Install k3s
+    ```bash
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" K3S_KUBECONFIG_MODE="644" sh -s - --disable=traefik
+    ```
 * To mimic DNS server locally, put following line in `/etc/hosts`:
     ```bash
     YOUR_IP_ADDRESS(non localhost)    *.yadp.localhost
