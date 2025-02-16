@@ -58,7 +58,7 @@ logs_bucket_secret = kubernetes.core.v1.Secret.get(
     opts=pulumi.ResourceOptions(depends_on=[logs_bucket]),
 )
 
-connections_secret_name = "connections"  # noqa: S105 Possible hardcoded password assigned
+connections_secret_name = f"{config.airflow_name}-connections"  # noqa: S105 Possible hardcoded password assigned
 connections_secret = kubernetes.core.v1.Secret(
     resource_name=f"{config.airflow_ns_name}-{config.airflow_name}-{connections_secret_name}",
     metadata=kubernetes.meta.v1.ObjectMetaArgs(

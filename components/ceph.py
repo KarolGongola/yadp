@@ -7,8 +7,11 @@ import pulumi_kubernetes.helm.v3 as helm
 from components.cert_manager import cluster_issuer
 from config import config
 
+# Initial password to dashboard for admin user can be obtained this way:
+# kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+
 ## To run ceph at less than 3 nodes, we need to modify the crushmap
-## We need to do it after cluster is reconciled by operator
+## We need to do it in toolbox pod after cluster is reconciled by operator
 # ceph osd getcrushmap -o crushmap.cm
 # crushtool --decompile crushmap.cm -o crushmap.txt
 # Change host -> osd in replicated_rule
