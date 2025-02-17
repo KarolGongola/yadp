@@ -6,7 +6,7 @@ import pulumi
 import pulumi_kubernetes as kubernetes
 import pulumi_kubernetes.helm.v3 as helm
 
-from components.ceph import region_name
+from components.ceph import object_store_name, region_name
 from components.cert_manager import cluster_issuer
 from components.keda import keda_release
 from config import config
@@ -60,7 +60,7 @@ logs_bucket_secret = kubernetes.core.v1.Secret.get(
 
 connections_secret_name = f"{config.airflow_name}-connections"  # noqa: S105 Possible hardcoded password assigned
 connections_secret = kubernetes.core.v1.Secret(
-    resource_name=f"{config.airflow_ns_name}-{config.airflow_name}-{connections_secret_name}",
+    resource_name=f"{config.airflow_ns_name}-{connections_secret_name}",
     metadata=kubernetes.meta.v1.ObjectMetaArgs(
         name=connections_secret_name,
         namespace=namespace.metadata["name"],
@@ -74,7 +74,10 @@ connections_secret = kubernetes.core.v1.Secret(
                     "conn_type": "aws",
                     "login": base64.b64decode(args[0]).decode("utf-8"),
                     "password": base64.b64decode(args[1]).decode("utf-8"),
-                    "extra": {"region_name": region_name, "endpoint_url": f"https://{config.ceph_rgw_hostname}"}
+                    "extra": {
+                        "region_name": region_name,
+                        "endpoint_url": f"http://rook-ceph-rgw-{object_store_name}.{config.ceph_ns_name}.svc.cluster.local:80",
+                    }
                     | ({"verify": "/etc/airflow/certs/root-ca.pem"} if config.root_ca_secret_name else {}),
                 }
                 if args
