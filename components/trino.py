@@ -108,10 +108,7 @@ trino_release = helm.Release(
             "rules": {
                 "rules.json": json.dumps(
                     {
-                        "catalogs": [
-                            {"user": user, "catalog": "(mysql|system|tpcds|tpch)", "allow": "all"}
-                            for user in config.admin_users
-                        ]
+                        "catalogs": [{"user": user, "catalog": "(mysql|system|tpcds|tpch)", "allow": "all"} for user in config.admin_users]
                         + [
                             {"user": user, "catalog": "(mysql|system|tpcds|tpch)", "allow": "read-only"}
                             for user in config.trusted_guest_users

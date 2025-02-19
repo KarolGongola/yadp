@@ -9,25 +9,26 @@ Below you can find description of how I have prepared my setup. It is not generi
 ## Components
 
 ### For now it includes:
+* Pulumi -> Apache 2.0
 * Cert Manager -> Apache 2.0
 * Ingress Nginx -> Apache 2.0
+* Ceph+Rook -> LGPL+Apache 2.0
 * Keycloak -> Apache 2.0
 * Trino -> Apache 2.0
 * Airflow -> Apache 2.0
 * KEDA -> Apache 2.0
 ### Planned:
-* Ceph/Rook -> LGPL/Apache 2.0
 * Prometheus -> Apache 2.0
 * Grafana -> AGPLv3
 * Fluentd -> Apache 2.0
-* VS Code -> MIT
+* VS Code Server -> MIT
 * Spark -> Apache 2.0
 * Apache Unicorn -> Apache 2.0
 * Kafka -> Apache 2.0
 * Flink -> Apache 2.0
 * Apache Superset -> Apache 2.0
-* Starrocks -> Apache 2.0
 * DataHub -> Apache 2.0
+* Starrocks -> Apache 2.0
 ### To consider:
 * Apache Polaris -> Apache 2.0
 * Lakekeeper -> Apache 2.0
@@ -69,9 +70,14 @@ Below you can find description of how I have prepared my setup. It is not generi
 * Ability to create LoadBalancer service. E.g. installed metallb with ip pool created.
 
 ### For local dev k8s
+* Install k3s
+    ```bash
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" K3S_KUBECONFIG_MODE="644" sh -s - --disable=traefik
+    ```
 * To mimic DNS server locally, put following line in `/etc/hosts`:
     ```bash
     YOUR_IP_ADDRESS(non localhost)    *.yadp.localhost
+    YOUR_IP_ADDRESS(non localhost)    keycloak.yadp.localhost
     ```
 * Pass your loacal /etc/hosts to coredens (to let applications inside k8s to resolve your locally defined hostnames)
     * Mount /etc/hosts to coredns pod
@@ -150,4 +156,12 @@ Below you can find description of how I have prepared my setup. It is not generi
 * Create or update platform
     ```bash
     pulumi up
+    ```
+* Terminal command to print all resource URNs:
+    ```bash
+    pulumi stack --show-urns
+    ```
+* Terminal command to print all resources from a namespace:
+    ```bash
+    kubectl get all -n <namespace>
     ```

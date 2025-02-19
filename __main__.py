@@ -2,6 +2,7 @@
 
 from components import (
     airflow,
+    ceph,
     cert_manager,
     ingress_controller,
     keda,

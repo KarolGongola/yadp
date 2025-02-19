@@ -1,17 +1,18 @@
 import base64
+import json
 from textwrap import dedent
 
 import pulumi
 import pulumi_kubernetes as kubernetes
 import pulumi_kubernetes.helm.v3 as helm
 
+from components.ceph import object_store_name, region_name
 from components.cert_manager import cluster_issuer
 from components.keda import keda_release
 from config import config
 from keycloak_iam.client import airflow_client
 from utils.airflow import airflow_roles_to_create, celery_executor_keda_query, get_webserver_config
 from utils.k8s import get_decoded_root_cert
-from utils.pulumi import create_pvc
 
 namespace = kubernetes.core.v1.Namespace(
     resource_name=config.airflow_ns_name,
@@ -20,13 +21,70 @@ namespace = kubernetes.core.v1.Namespace(
     },
 )
 
-airflow_db_pvc = create_pvc(
-    namespace_name=config.airflow_ns_name,
-    volume_size="8Gi",
-    storage_class_name=config.storage_class_name,
-    pvc_name="airflow-db-pvc",
-    persistence_dir="airflow_db",
-    pv_name="airflow-db-pv",
+logs_bucket_name = f"{config.airflow_ns_name}-{config.airflow_name}-logs"
+logs_bucket = kubernetes.apiextensions.CustomResource(
+    resource_name=logs_bucket_name,
+    api_version="objectbucket.io/v1alpha1",
+    kind="ObjectBucketClaim",
+    metadata={
+        "name": logs_bucket_name,
+        "namespace": namespace.metadata["name"],
+    },
+    spec={
+        "bucketName": logs_bucket_name,
+        "storageClassName": config.bucket_storage_class_name,
+        "additionalConfig": {
+            "bucketMaxObjects": "10000",
+            "bucketMaxSize": "64G",
+            "bucketLifecycle": json.dumps(
+                {
+                    "Rules": [
+                        {
+                            "ID": "ExpireAfterNDays",
+                            "Status": "Enabled",
+                            "Prefix": "",
+                            "Expiration": {"Days": config.ceph_object_expiration_days},
+                        }
+                    ]
+                }
+            ),
+        },
+    },
+)
+
+logs_bucket_secret = kubernetes.core.v1.Secret.get(
+    resource_name=f"{logs_bucket_name}-secret",
+    id=f"{config.airflow_ns_name}/{logs_bucket_name}",
+    opts=pulumi.ResourceOptions(depends_on=[logs_bucket]),
+)
+
+connections_secret_name = f"{config.airflow_name}-connections"  # noqa: S105 Possible hardcoded password assigned
+connections_secret = kubernetes.core.v1.Secret(
+    resource_name=f"{config.airflow_ns_name}-{connections_secret_name}",
+    metadata=kubernetes.meta.v1.ObjectMetaArgs(
+        name=connections_secret_name,
+        namespace=namespace.metadata["name"],
+    ),
+    string_data={
+        "AIRFLOW_CONN_LOGS_S3": pulumi.Output.all(
+            logs_bucket_secret.data["AWS_ACCESS_KEY_ID"], logs_bucket_secret.data["AWS_SECRET_ACCESS_KEY"]
+        ).apply(
+            lambda args: json.dumps(
+                {
+                    "conn_type": "aws",
+                    "login": base64.b64decode(args[0]).decode("utf-8"),
+                    "password": base64.b64decode(args[1]).decode("utf-8"),
+                    "extra": {
+                        "region_name": region_name,
+                        "endpoint_url": f"http://rook-ceph-rgw-{object_store_name}.{config.ceph_ns_name}.svc.cluster.local:80",
+                    }
+                    | ({"verify": "/etc/airflow/certs/root-ca.pem"} if config.root_ca_secret_name else {}),
+                }
+                if args
+                else None
+            )
+        ),
+    },
 )
 
 role_creation_script_config_map_name = "role-creation-script"
@@ -76,7 +134,7 @@ if config.root_ca_secret_name:
     )
 
 airflow_release = helm.Release(
-    opts=pulumi.ResourceOptions(depends_on=[keda_release]),
+    opts=pulumi.ResourceOptions(depends_on=[keda_release, connections_secret]),
     resource_name=config.airflow_name,
     chart="airflow",
     namespace=namespace.metadata["name"],
@@ -86,22 +144,32 @@ airflow_release = helm.Release(
     version="1.15.0",
     values={
         "config": {
-            "scheduler": {
-                "min_file_process_interval": 60  # Set your desired interval here
-            },
+            "scheduler": {"min_file_process_interval": 60},
             "celery": {
                 "worker_concurrency": 8,
+            },
+            "logging": {
+                "remote_logging": True,
+                "remote_base_log_folder": f"s3://{logs_bucket_name}",
+                "remote_log_conn_id": "logs_s3",
+                "encrypt_s3_logs": False,
             },
         },
         "postgresql": {
             "enabled": True,
-            "primary": {
-                "persistence": {
-                    "enabled": True,
-                    "existingClaim": airflow_db_pvc.metadata["name"],
-                },
+            "global": {
+                "defaultStorageClass": config.storage_class_name,
             },
         },
+        "extraEnvFrom": json.dumps(
+            [
+                {
+                    "secretRef": {
+                        "name": connections_secret_name,
+                    },
+                },
+            ]
+        ),
         "ingress": {
             "web": {
                 "enabled": True,
@@ -124,6 +192,54 @@ airflow_release = helm.Release(
             "useHelmHooks": False,
             "applyCustomEnv": False,
         },
+        "env": [
+            {
+                "name": "REQUESTS_CA_BUNDLE",
+                "value": "/etc/airflow/certs/root-ca.pem",
+            },
+            {
+                "name": "AIRFLOW__CORE__LOGGING_LEVEL",
+                "value": "DEBUG",
+            },
+        ]
+        if config.root_ca_secret_name
+        else [],
+        "volumes": [
+            {
+                "name": "create-roles-script",
+                "configMap": {
+                    "name": role_creation_script_config_map_name,
+                },
+            }
+        ]
+        + (
+            [
+                {
+                    "name": "certs-volume",
+                    "configMap": {
+                        "name": certs_configmap_name,
+                    },
+                }
+            ]
+            if config.root_ca_secret_name
+            else []
+        ),
+        "volumeMounts": [
+            {
+                "name": "create-roles-script",
+                "mountPath": "/etc/scripts",
+            }
+        ]
+        + (
+            [
+                {
+                    "name": "certs-volume",
+                    "mountPath": "/etc/airflow/certs",
+                }
+            ]
+            if config.root_ca_secret_name
+            else []
+        ),
         "webserverSecretKey": config.airflow_webserwer_secret_key,
         "webserver": {
             "webserverConfig": airflow_client.client_secret.apply(get_webserver_config),
@@ -135,54 +251,6 @@ airflow_release = helm.Release(
                 "-c",
                 "cp /etc/scripts/create-roles.sh ./ && chmod +x ./create-roles.sh && ./create-roles.sh && exec airflow webserver",
             ],
-            "env": [
-                {
-                    "name": "REQUESTS_CA_BUNDLE",
-                    "value": "/etc/airflow/certs/root-ca.pem",
-                },
-                {
-                    "name": "AIRFLOW__CORE__LOGGING_LEVEL",
-                    "value": "DEBUG",
-                },
-            ]
-            if config.root_ca_secret_name
-            else [],
-            "extraVolumes": [
-                {
-                    "name": "create-roles-script",
-                    "configMap": {
-                        "name": role_creation_script_config_map_name,
-                    },
-                }
-            ]
-            + (
-                [
-                    {
-                        "name": "certs-volume",
-                        "configMap": {
-                            "name": certs_configmap_name,
-                        },
-                    }
-                ]
-                if config.root_ca_secret_name
-                else []
-            ),
-            "extraVolumeMounts": [
-                {
-                    "name": "create-roles-script",
-                    "mountPath": "/etc/scripts",
-                }
-            ]
-            + (
-                [
-                    {
-                        "name": "certs-volume",
-                        "mountPath": "/etc/airflow/certs",
-                    }
-                ]
-                if config.root_ca_secret_name
-                else []
-            ),
         },
         "executor": "CeleryExecutor",
         "workers": {
@@ -190,7 +258,7 @@ airflow_release = helm.Release(
             "keda": {
                 "enabled": True,
                 "pollingInterval": 10,
-                "cooldownPeriod": 60,
+                "cooldownPeriod": 120,
                 "minReplicaCount": 0,
                 "maxReplicaCount": 10,
                 "query": celery_executor_keda_query,
@@ -225,7 +293,6 @@ airflow_release = helm.Release(
         },
         "triggerer": {
             "replicas": 1,
-            # "keda": {},
             "persistence": {
                 "size": "16Gi",
                 "storageClassName": config.storage_class_name,
@@ -233,7 +300,7 @@ airflow_release = helm.Release(
             "keda": {
                 "enabled": True,
                 "pollingInterval": 10,
-                "cooldownPeriod": 60,
+                "cooldownPeriod": 120,
                 "minReplicaCount": 0,
                 "maxReplicaCount": 2,
             },
@@ -264,21 +331,7 @@ airflow_release = helm.Release(
                 },
             },
         },
-        # Disabled because my storageclass does not support ReadWriteMany, TODO: set logs at s3 or other system
-        # "logs": {
-        #     "persistence": {
-        #         "enabled": config.airflow_persistence_enabled,
-        #         "size": "16Gi",
-        #         "storageClassName": config.storage_class_name,
-        #     },
-        # },
         "dags": {
-            # Disabled because my storageclass does not support ReadWriteMany
-            # "persistence": {
-            #     "enabled": config.airflow_persistence_enabled,
-            #     "size": "16Gi",
-            #     "storageClassName": config.storage_class_name,
-            # },
             "gitSync": {
                 "enabled": True,
                 "repo": config.airflow_dags_repo,

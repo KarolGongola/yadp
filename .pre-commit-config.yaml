@@ -14,8 +14,9 @@ repos:
       args: [ --fix ]
     - id: ruff-format
 
-- repo: https://github.com/gitleaks/gitleaks
-  rev: v8.22.1
-  hooks:
-    - id: gitleaks
-      args: [ --verbose ]
+## TODO: Uncomment when gitleaks fixed
+# - repo: https://github.com/gitleaks/gitleaks
+#   rev: v8.23.3
+#   hooks:
+#     - id: gitleaks
+#       args: [ --verbose ]

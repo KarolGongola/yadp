@@ -1,8 +1,9 @@
+import pulumi
 import pulumi_kubernetes as kubernetes
 
+from components.ceph import rook_cluster_release
 from components.cert_manager import cluster_issuer
 from config import config
-from utils.pulumi import create_pvc
 
 keycloak_ns = kubernetes.core.v1.Namespace(
     config.keycloak_ns_name,
@@ -11,17 +12,9 @@ keycloak_ns = kubernetes.core.v1.Namespace(
     ),
 )
 
-import_export_pvc = create_pvc(
-    namespace_name=config.keycloak_ns_name,
-    volume_size="1Gi",
-    storage_class_name=config.storage_class_name,
-    pvc_name="import-export-pvc",
-    persistence_dir="keycloak_realms",
-    pv_name="import-export-pv",
-)
-
 keycloak_release = kubernetes.helm.v3.Release(
     resource_name=config.keycloak_name,
+    opts=pulumi.ResourceOptions(depends_on=[rook_cluster_release]),
     name=config.keycloak_name,
     chart="oci://registry-1.docker.io/bitnamicharts/keycloak",
     namespace=config.keycloak_ns_name,
@@ -47,32 +40,6 @@ keycloak_release = kubernetes.helm.v3.Release(
             "adminPassword": config.keycloak_admin_password,
         },
         "extraEnvVars": config.keycloak_extraEnvVars,
-        "extraVolumes": [
-            {
-                "name": "import-export-volume",
-                "persistentVolumeClaim": {
-                    "claimName": import_export_pvc.metadata["name"],
-                },
-            },
-        ],
-        "extraVolumeMounts": [
-            {
-                "name": "import-export-volume",
-                "mountPath": "/export",
-            },
-            {
-                "name": "import-export-volume",
-                "mountPath": "/opt/bitnami/keycloak/data/import",
-            },
-        ],
-        # # Disablle cache and change readOnlyRootFilesystem to False just to be able to export realms
-        # # https://github.com/bitnami/charts/issues/13105#issuecomment-1375422340
-        # "cache": {
-        #     "enabled": False
-        # },
-        # "containerSecurityContext": {
-        #     "readOnlyRootFilesystem": False,
-        # },
     },
     version="24.3.2",
     skip_crds=False,
