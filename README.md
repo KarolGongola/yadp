@@ -24,14 +24,15 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 ### Planned:
 * Apache Superset -> Apache 2.0
 * DataHub -> Apache 2.0
-* Fluentd -> Apache 2.0
 * Kafka -> Apache 2.0
 * VS Code Server -> MIT
 * Spark -> Apache 2.0
 * Apache Unicorn -> Apache 2.0
 * Flink -> Apache 2.0
+* Fluentd -> Apache 2.0
 * Starrocks -> Apache 2.0
 ### To consider:
+* Apache Solr -> Apache 2.0
 * Apache Polaris -> Apache 2.0
 * Lakekeeper -> Apache 2.0
 * Velero -> Apache 2.0
