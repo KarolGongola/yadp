@@ -212,6 +212,9 @@ rook_cluster_release = helm.Release(
                     "annotations": {
                         "kubernetes.io/ingress.class": "nginx",
                         "cert-manager.io/cluster-issuer": cluster_issuer.metadata["name"],
+                        "nginx.ingress.kubernetes.io/proxy-body-size": "0",
+                        "nginx.ingress.kubernetes.io/proxy-read-timeout": "600",
+                        "nginx.ingress.kubernetes.io/proxy-send-timeout": "600",
                     },
                     "host": {
                         "name": config.ceph_rgw_hostname,
