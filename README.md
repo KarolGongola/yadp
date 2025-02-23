@@ -5,8 +5,8 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 
 ## Requirements
 * kubernetes (min 8 cores, 32GB memory)
-* raw disks (min 3 partitions without filesystem) - [more details](https://rook.io/docs/rook/v1.10/Getting-Started/Prerequisites/prerequisites/#ceph-prerequisites)
-* git server
+* raw disks (min 3 disks or partitions without filesystem) - [more details](https://rook.io/docs/rook/v1.10/Getting-Started/Prerequisites/prerequisites/#ceph-prerequisites)
+* git server (e.g. for Airflow DAGs)
 
 ## Components
 
@@ -137,10 +137,6 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
           tls.key: $(cat ~/yadp-certs/rootCA.key | base64 | tr -d '\n')
         EOF
 
-        ```
-    * Create persistence dir for some PVCs:
-        ```bash
-        mkdir -p ~/yadp_k3s_persistence_dir
         ```
 
 ## Create or update platform setup

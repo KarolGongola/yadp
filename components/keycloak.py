@@ -40,7 +40,6 @@ keycloak_release = kubernetes.helm.v3.Release(
             "adminUser": config.keycloak_admin_login,
             "adminPassword": config.keycloak_admin_password,
         },
-        "extraEnvVars": config.keycloak_extraEnvVars,
         "logging": {
             "level": config.log_level.upper(),
         },
