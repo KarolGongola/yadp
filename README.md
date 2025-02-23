@@ -1,10 +1,12 @@
 # Yet Another Data Platform
-Kubernetes based data platform built from open source components. The idea is to build data platform which uses only basic functionalities from provider like k8s, storageclass, s3. With this assumption it could be running at any cloud as well as at on-prem kubernetes.
+Kubernetes based data platform built from open source components.
 
 In this repo you can see how to run it at local kubernetes (k3s) and at my hybrid homelab kubernetes (OCI + local VMs). My homelab setup you can see (with guest permissions) at [https://yadp.xyz](https://yadp.xyz)
 
-Below you can find description of how I have prepared my setup. It is not generic instruction, so you can modify whatever you wish or replicaty my approach.
-
+## Requirements
+* kubernetes (min 8 cores, 32GB memory)
+* raw disks (min 3 partitions without filesystem) - [more details](https://rook.io/docs/rook/v1.10/Getting-Started/Prerequisites/prerequisites/#ceph-prerequisites)
+* git server
 
 ## Components
 
@@ -15,27 +17,25 @@ Below you can find description of how I have prepared my setup. It is not generi
 * Ceph+Rook -> LGPL+Apache 2.0
 * Keycloak -> Apache 2.0
 * Trino -> Apache 2.0
-* Airflow -> Apache 2.0
 * KEDA -> Apache 2.0
-### Planned:
+* Airflow -> Apache 2.0
 * Prometheus -> Apache 2.0
 * Grafana -> AGPLv3
+### Planned:
+* Apache Superset -> Apache 2.0
+* DataHub -> Apache 2.0
 * Fluentd -> Apache 2.0
+* Kafka -> Apache 2.0
 * VS Code Server -> MIT
 * Spark -> Apache 2.0
 * Apache Unicorn -> Apache 2.0
-* Kafka -> Apache 2.0
 * Flink -> Apache 2.0
-* Apache Superset -> Apache 2.0
-* DataHub -> Apache 2.0
 * Starrocks -> Apache 2.0
 ### To consider:
 * Apache Polaris -> Apache 2.0
 * Lakekeeper -> Apache 2.0
 * Velero -> Apache 2.0
-* CloudBeaver -> Apache 2.0
-* Jupyter notebook -> BSD-3
-* Marquez -> Apache 2.0
+* Gitlab -> MIT
 * artifactory
 
 ## Prerequisities

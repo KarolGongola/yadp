@@ -42,6 +42,9 @@ class Config:
     ceph_name: str = "ceph"
     ceph_failure_domain: str = "host"
     ceph_object_expiration_days: int = 30
+    ceph_osd_memory_target: str = "4Gi"
+    ceph_osd_memory_limit: str = "4Gi"
+    monitoring_ns_name: str = "monitoring"
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -73,6 +76,10 @@ class Config:
     def ceph_rgw_hostname(self) -> str:
         return f"s3.{self.domain_name}"
 
+    @property
+    def grafana_hostname(self) -> str:
+        return f"grafana.{self.domain_name}"
+
 
 @dataclass(kw_only=True)
 class LocalConfig(Config):
@@ -90,6 +97,8 @@ class LocalConfig(Config):
     airflow_dags_branch: str = "dev"
     ceph_failure_domain: str = "osd"
     ceph_object_expiration_days: int = 1
+    ceph_osd_memory_target: str = "1Gi"
+    ceph_osd_memory_limit: str = "1200Mi"
 
     @property
     def cluster_issuer_spec(self) -> dict:
@@ -119,6 +128,10 @@ class LocalConfig(Config):
     def airflow_webserwer_secret_key(self) -> str:
         return os.getenv("LOCAL_AIRFLOW_WEBSERVER_SECRET_KEY")
 
+    @property
+    def grafana_admin_password(self) -> str:
+        return os.getenv("LOCAL_GRAFANA_ADMIN_PASSWORD")
+
 
 @dataclass(kw_only=True)
 class HomelabConfig(Config):
@@ -144,6 +157,8 @@ class HomelabConfig(Config):
             },
         },
     )
+    ceph_osd_memory_target: str = "2Gi"
+    ceph_osd_memory_limit: str = "2400Mi"
 
     @property
     def keycloak_admin_password(self) -> str:
@@ -164,6 +179,10 @@ class HomelabConfig(Config):
     @property
     def airflow_webserwer_secret_key(self) -> str:
         return os.getenv("HOMELAB_AIRFLOW_WEBSERVER_SECRET_KEY")
+
+    @property
+    def grafana_admin_password(self) -> str:
+        return os.getenv("HOMELAB_GRAFANA_ADMIN_PASSWORD")
 
 
 pulumi_stack = pulumi.get_stack()
