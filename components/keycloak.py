@@ -21,6 +21,7 @@ keycloak_release = kubernetes.helm.v3.Release(
     repository_opts=kubernetes.helm.v3.RepositoryOptsArgs(
         repo="",
     ),
+    # https://github.com/bitnami/charts/blob/main/bitnami/keycloak/values.yaml
     values={
         "global.defaultStorageClass": config.storage_class_name,
         "proxyAddressForwarding": True,
@@ -39,8 +40,15 @@ keycloak_release = kubernetes.helm.v3.Release(
             "adminUser": config.keycloak_admin_login,
             "adminPassword": config.keycloak_admin_password,
         },
-        "extraEnvVars": config.keycloak_extraEnvVars,
+        "logging": {
+            "level": config.log_level.upper(),
+        },
+        "metrics": {
+            "serviceMonitor": {
+                "enabled": True,
+            },
+        },
     },
-    version="24.3.2",
+    version="24.4.10",
     skip_crds=False,
 )

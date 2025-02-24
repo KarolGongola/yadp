@@ -7,6 +7,7 @@ from components import (
     ingress_controller,
     keda,
     keycloak,
+    monitoring,
     trino,
 )
 from keycloak_iam import (

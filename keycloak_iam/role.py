@@ -116,6 +116,33 @@ airflow_admin_role = keycloak.Role(
     description="YADP Airflow Admin",
 )
 
+grafana_viewer_role_name = "grafana-viewer"
+grafana_viewer_role = keycloak.Role(
+    resource_name=grafana_viewer_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=grafana_viewer_role_name,
+    description="YADP Grafana Viewer",
+)
+
+grafana_editor_role_name = "grafana-editor"
+grafana_editor_role = keycloak.Role(
+    resource_name=grafana_editor_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=grafana_editor_role_name,
+    description="YADP Grafana Editor",
+)
+
+grafana_admin_role_name = "grafana-admin"
+grafana_admin_role = keycloak.Role(
+    resource_name=grafana_admin_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=grafana_admin_role_name,
+    description="YADP Grafana Admin",
+)
+
 default_roles = keycloak.DefaultRoles(
     resource_name="default-roles",
     opts=pulumi.ResourceOptions(provider=master_provider),
@@ -124,5 +151,6 @@ default_roles = keycloak.DefaultRoles(
         "offline_access",
         "uma_authorization",
         airflow_viewer_role.name,
+        grafana_viewer_role.name,
     ],
 )

@@ -53,3 +53,22 @@ airflow_client = keycloak.openid.Client(
         provider=master_provider,
     ),
 )
+
+grafana_client_id = "grafana"
+grafana_client = keycloak.openid.Client(
+    resource_name=grafana_client_id,
+    name="Grafana",
+    realm_id=main_realm.realm,
+    client_id=grafana_client_id,
+    access_type="CONFIDENTIAL",
+    standard_flow_enabled=True,
+    direct_access_grants_enabled=True,
+    implicit_flow_enabled=False,
+    base_url=f"https://{config.grafana_hostname}",
+    root_url=f"https://{config.grafana_hostname}",
+    valid_redirect_uris=["/*"],
+    valid_post_logout_redirect_uris=["/*"],
+    opts=pulumi.ResourceOptions(
+        provider=master_provider,
+    ),
+)

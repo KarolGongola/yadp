@@ -61,6 +61,9 @@ rook_operator_release = helm.Release(
             },
         },
         "enableDiscoveryDaemon": True,
+        "monitoring": {
+            "enabled": True,
+        },
     },
 )
 
@@ -74,24 +77,31 @@ rook_cluster_release = helm.Release(
     ),
     version=chart_version,
     allow_null_values=True,  # added to force overrides for arrays
+    # https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph-cluster/values.yaml
     values={
         "operatorNamespace": namespace.metadata["name"],
         "clusterName": config.ceph_name,
-        "configOverride": dedent("""
+        "configOverride": dedent(f"""
             [global]
-            mon_max_pg_per_osd = 1024
+            mon_max_pg_per_osd = 512
             mon_allow_pool_delete = true
             osd_pool_default_size = 3
             osd_pool_default_min_size = 2
+            [mgr]
+            mgr/crash/warn_recent_interval = 1
+            [osd]
+            osd_memory_target = {config.ceph_osd_memory_target}
             """),
         "toolbox": {
             "enabled": True,
         },
-        # TODO: Add monitoring
+        # TODO: Deploy prometheus CRDs before enabling ceph monitoring
+        # Before it is done, we need to disable monitoring below to install whole setup,
+        # then enable it and apply changes
         "monitoring": {
-            "enabled": False,
-            "metricsDisabled": True,
-            "createPrometheusRules": False,
+            "enabled": True,
+            "metricsDisabled": False,
+            "createPrometheusRules": True,
         },
         "cephClusterSpec": {
             "cephVersion": {
@@ -115,7 +125,17 @@ rook_cluster_release = helm.Release(
             "logCollector": {
                 "enabled": False,
             },
-            "resources": {},
+            "resources": {
+                "osd": {
+                    "limits": {
+                        "memory": config.ceph_osd_memory_limit,
+                    },
+                    "requests": {
+                        "cpu": "1000m",
+                        "memory": config.ceph_osd_memory_limit,
+                    },
+                },
+            },
             "storage": {
                 "useAllNodes": True,
                 "useAllDevices": True,
@@ -194,6 +214,9 @@ rook_cluster_release = helm.Release(
                     "annotations": {
                         "kubernetes.io/ingress.class": "nginx",
                         "cert-manager.io/cluster-issuer": cluster_issuer.metadata["name"],
+                        "nginx.ingress.kubernetes.io/proxy-body-size": "0",
+                        "nginx.ingress.kubernetes.io/proxy-read-timeout": "600",
+                        "nginx.ingress.kubernetes.io/proxy-send-timeout": "600",
                     },
                     "host": {
                         "name": config.ceph_rgw_hostname,
