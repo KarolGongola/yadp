@@ -96,6 +96,8 @@ rook_cluster_release = helm.Release(
             "enabled": True,
         },
         # TODO: Deploy prometheus CRDs before enabling ceph monitoring
+        # Until it is done - we need to disable monitoring to install whole setup
+        # then enable it and apply changes
         "monitoring": {
             "enabled": True,
             "metricsDisabled": False,
