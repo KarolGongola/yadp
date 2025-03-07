@@ -87,11 +87,12 @@ superset_release = kubernetes.helm.v3.Release(
             "KEYCLOAK_CLIENT_ID": superset_client.client_id,
             "KEYCLOAK_CLIENT_SECRET": superset_client.client_secret,
         },
+        # TODO: Use internal trino service url instead of public one
         "extraConfigs": {
-            "import_datasources.yaml": dedent("""
+            "import_datasources.yaml": dedent(f"""
                 databases:
                 - database_name: Trino tpcds
-                  sqlalchemy_uri: trino://trino.yadp.localhost:443/tpcds
+                  sqlalchemy_uri: trino://{config.trino_hostname}:443/tpcds
                   cache_timeout: null
                   expose_in_sqllab: true
                   allow_run_async: false
@@ -100,18 +101,18 @@ superset_release = kubernetes.helm.v3.Release(
                   allow_dml: true
                   allow_csv_upload: false
                   extra: |
-                    {
+                    {{
                       "allows_virtual_table_explore": true,
                       "cost_estimate_enabled": true,
-                      "schema_options": {
+                      "schema_options": {{
                         "expand_rows": true
-                      },
-                      "engine_params": {
-                        "connect_args": {
+                      }},
+                      "engine_params": {{
+                        "connect_args": {{
                           "http_scheme": "https"
-                        }
-                      }
-                    }
+                        }}
+                      }}
+                    }}
                   impersonate_user: true
             """).strip()
         },
@@ -125,7 +126,7 @@ superset_release = kubernetes.helm.v3.Release(
                     'Trino': {{
                         'id': os.getenv("KEYCLOAK_CLIENT_ID"),
                         'secret': os.getenv("KEYCLOAK_CLIENT_SECRET"),
-                        'scope': 'openid email roles profile',
+                        'scope': 'openid email offline_access roles profile',
                         'redirect_uri': "https://{config.superset_hostname}/api/v1/database/oauth2/",
                         'authorization_request_uri': 'https://{config.keycloak_url}/realms/{config.realm_name}/protocol/openid-connect/auth',
                         'token_request_uri': 'https://{config.keycloak_url}/realms/{config.realm_name}/protocol/openid-connect/token',
