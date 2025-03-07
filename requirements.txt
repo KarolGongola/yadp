@@ -4,3 +4,4 @@ pulumi-keycloak==6.2.1
 pulumi-aws==6.68.0
 kubernetes==32.0.0
 pre-commit==4.1.0
+certifi==2025.1.31

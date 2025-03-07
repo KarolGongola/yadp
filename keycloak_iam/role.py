@@ -3,7 +3,7 @@ import pulumi_keycloak as keycloak
 
 from keycloak_iam.provider import master_provider
 from keycloak_iam.realm import main_realm
-from utils.keycloak import get_role_ids
+from utils.keycloak import get_realm_role, get_role_ids
 
 all_built_in_client_roles = {
     "account": [
@@ -66,6 +66,12 @@ trusted_guest_built_in_client_roles = {
         "view-users",
     ],
 }
+
+offline_access_role = get_realm_role(
+    realm_id=main_realm.realm,
+    role_name="offline_access",
+    keycloak_provider=master_provider,
+)
 
 admin_role_name = "admin"
 admin_role = keycloak.Role(
@@ -141,6 +147,24 @@ grafana_admin_role = keycloak.Role(
     realm_id=main_realm.realm,
     name=grafana_admin_role_name,
     description="YADP Grafana Admin",
+)
+
+superset_admin_role_name = "superset-admin"
+superset_admin_role = keycloak.Role(
+    resource_name=superset_admin_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=superset_admin_role_name,
+    description="YADP Superset Admin",
+)
+
+superset_trusted_viewer_role_name = "superset-trusted-viewer"
+superset_trusted_viewer_role = keycloak.Role(
+    resource_name=superset_trusted_viewer_role_name,
+    opts=pulumi.ResourceOptions(provider=master_provider),
+    realm_id=main_realm.realm,
+    name=superset_trusted_viewer_role_name,
+    description="YADP Superset Trusted Viewer",
 )
 
 default_roles = keycloak.DefaultRoles(

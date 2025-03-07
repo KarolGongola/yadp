@@ -8,6 +8,7 @@ from components import (
     keda,
     keycloak,
     monitoring,
+    superset,
     trino,
 )
 from keycloak_iam import (
