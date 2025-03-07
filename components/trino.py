@@ -6,7 +6,7 @@ import pulumi_kubernetes.helm.v3 as helm
 from components.cert_manager import cluster_issuer
 from config import config
 from keycloak_iam.client import trino_client, trino_client_id
-from utils.k8s import get_decoded_root_cert
+from utils.k8s import get_ca_bundle
 
 namespace = kubernetes.core.v1.Namespace(
     resource_name=config.trino_ns_name,
@@ -21,7 +21,7 @@ if config.root_ca_secret_name:
         resource_name=f"{config.trino_ns_name}-{certs_configmap_name}",
         metadata=kubernetes.meta.v1.ObjectMetaArgs(namespace=namespace.metadata["name"], name=certs_configmap_name),
         data={
-            "root-ca.pem": get_decoded_root_cert(),
+            "root-ca.pem": get_ca_bundle(),
         },
     )
 

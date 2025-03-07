@@ -46,6 +46,14 @@ def get_client_role(realm_id: str, client_id: str, role_name: str, keycloak_prov
     )
 
 
+def get_realm_role(realm_id: str, role_name: str, keycloak_provider: keycloak.Provider) -> keycloak.AwaitableGetRoleResult:
+    return keycloak.get_role(
+        opts=pulumi.InvokeOptions(provider=keycloak_provider),
+        realm_id=realm_id,
+        name=role_name,
+    )
+
+
 def get_role_ids(realm_id: str, roles: dict[str, list[str]], keycloak_provider: keycloak.Provider) -> Generator[str, None, None]:
     for client_name, role_names in roles.items():
         client_id = get_oidc_client(realm_id=realm_id, client_id=client_name, keycloak_provider=keycloak_provider).id

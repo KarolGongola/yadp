@@ -13,6 +13,7 @@ class Config:
     log_level: str = "info"
     root_ca_secret_name: str = None
     storage_class_name: str = "rook-ceph-block"
+    use_minimal_storage: bool = False
     bucket_storage_class_name: str = "rook-ceph-bucket"
     cert_manager_ns_name: str = "cert-manager"
     cert_manager_name: str = "cert-manager"
@@ -39,6 +40,8 @@ class Config:
     ceph_osd_memory_target: str = "4Gi"
     ceph_osd_memory_limit: str = "4Gi"
     monitoring_ns_name: str = "monitoring"
+    superset_ns_name: str = "superset"
+    superset_name: str = "superset"
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -74,6 +77,10 @@ class Config:
     def grafana_hostname(self) -> str:
         return f"grafana.{self.domain_name}"
 
+    @property
+    def superset_hostname(self) -> str:
+        return f"superset.{self.domain_name}"
+
 
 @dataclass(kw_only=True)
 class LocalConfig(Config):
@@ -86,6 +93,7 @@ class LocalConfig(Config):
     ceph_object_expiration_days: int = 1
     ceph_osd_memory_target: str = "1Gi"
     ceph_osd_memory_limit: str = "1200Mi"
+    use_minimal_storage: bool = True
 
     @property
     def cluster_issuer_spec(self) -> dict:
@@ -119,45 +127,45 @@ class LocalConfig(Config):
     def grafana_admin_password(self) -> str:
         return os.getenv("LOCAL_GRAFANA_ADMIN_PASSWORD")
 
+    @property
+    def superset_secret_key(self) -> str:
+        return os.getenv("LOCAL_SUPERSET_SECRET_KEY")
+
+    @property
+    def superset_postgres_password(self) -> str:
+        return os.getenv("LOCAL_SUPERSET_POSTGRES_PASSWORD")
+
+    @property
+    def keycloak_superset_svc_user_password(self) -> str:
+        return os.getenv("LOCAL_KEYCLOAK_SUPERSET_SVC_USER_PASSWORD")
+
 
 @dataclass(kw_only=True)
 class HomelabConfig(Config):
     domain_name: str = "yadp.xyz"
     k8s_context: str = "eagle"
-    # TODO: temporary change
-    root_ca_secret_name: str = "root-ca"  # noqa: S105 Possible hardcoded password
-    ## TODO: temporary commented out
-    # cluster_issuer_spec: dict = field(
-    #     default_factory=lambda: {
-    #         "acme": {
-    #             "server": "https://acme-v02.api.letsencrypt.org/directory",
-    #             "email": "karol.gongola@gmail.com",
-    #             "privateKeySecretRef": {
-    #                 "name": "letsencrypt-account-key",
-    #             },
-    #             "solvers": [
-    #                 {
-    #                     "http01": {
-    #                         "ingress": {
-    #                             "class": "nginx",
-    #                         },
-    #                     },
-    #                 },
-    #             ],
-    #         },
-    #     },
-    # )
+    cluster_issuer_spec: dict = field(
+        default_factory=lambda: {
+            "acme": {
+                "server": "https://acme-v02.api.letsencrypt.org/directory",
+                "email": "karol.gongola@gmail.com",
+                "privateKeySecretRef": {
+                    "name": "letsencrypt-account-key",
+                },
+                "solvers": [
+                    {
+                        "http01": {
+                            "ingress": {
+                                "class": "nginx",
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    )
     ceph_osd_memory_target: str = "1Gi"
     ceph_osd_memory_limit: str = "1200Mi"
-
-    # TODO: temporary change
-    @property
-    def cluster_issuer_spec(self) -> dict:
-        return {
-            "ca": {
-                "secretName": self.root_ca_secret_name,
-            },
-        }
 
     @property
     def keycloak_admin_password(self) -> str:
@@ -182,6 +190,18 @@ class HomelabConfig(Config):
     @property
     def grafana_admin_password(self) -> str:
         return os.getenv("HOMELAB_GRAFANA_ADMIN_PASSWORD")
+
+    @property
+    def superset_secret_key(self) -> str:
+        return os.getenv("HOMELAB_SUPERSET_SECRET_KEY")
+
+    @property
+    def superset_postgres_password(self) -> str:
+        return os.getenv("HOMELAB_SUPERSET_POSTGRES_PASSWORD")
+
+    @property
+    def keycloak_superset_svc_user_password(self) -> str:
+        return os.getenv("HOMELAB_KEYCLOAK_SUPERSET_SVC_USER_PASSWORD")
 
 
 pulumi_stack = pulumi.get_stack()

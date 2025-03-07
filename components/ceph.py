@@ -131,7 +131,7 @@ rook_cluster_release = helm.Release(
                         "memory": config.ceph_osd_memory_limit,
                     },
                     "requests": {
-                        "cpu": "1000m",
+                        "cpu": "300m",
                         "memory": config.ceph_osd_memory_limit,
                     },
                 },
@@ -192,7 +192,7 @@ rook_cluster_release = helm.Release(
                                 "memory": "2Gi",
                             },
                             "requests": {
-                                "cpu": "1000m",
+                                "cpu": "500m",
                                 "memory": "1Gi",
                             },
                         },

@@ -77,24 +77,25 @@ def get_webserver_config(client_secret: str) -> str:
             def get_oauth_user_info(self, provider, response):
                 if provider == "keycloak":
                     token = response["access_token"]
+                    log.debug("response: {{0}}".format(response))
                     me = jwt.decode(token, public_key, algorithms=["HS256", "RS256"], options={{"verify_aud": False}})
                     log.debug("me: {{0}}".format(me))
 
                     # Extract roles from resource access
                     realm_access = me.get("realm_access", {{}})
-                    groups = realm_access.get("roles", [])
+                    roles = realm_access.get("roles", [])
 
-                    log.info("groups: {{0}}".format(groups))
+                    log.info("roles: {{0}}".format(roles))
 
-                    if not groups:
-                        groups = [AUTH_USER_REGISTRATION_ROLE]
+                    if not roles:
+                        roles = [AUTH_USER_REGISTRATION_ROLE]
 
                     userinfo = {{
                         "username": me.get("preferred_username"),
                         "email": me.get("email"),
                         "first_name": me.get("given_name"),
                         "last_name": me.get("family_name"),
-                        "role_keys": groups,
+                        "role_keys": roles,
                     }}
 
                     log.info("user info: {{0}}".format(userinfo))

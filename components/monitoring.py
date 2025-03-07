@@ -5,7 +5,7 @@ from components.cert_manager import cluster_issuer
 from config import config
 from keycloak_iam.client import grafana_client
 from keycloak_iam.role import grafana_admin_role_name, grafana_editor_role_name, grafana_viewer_role_name
-from utils.k8s import get_decoded_root_cert
+from utils.k8s import get_ca_bundle
 
 # TODO: To let grafana dashboard use SSO with Keycloak,
 # we need go to Keycloak admin console:
@@ -28,7 +28,7 @@ if config.root_ca_secret_name:
         resource_name=f"{config.monitoring_ns_name}-{certs_configmap_name}",
         metadata=kubernetes.meta.v1.ObjectMetaArgs(namespace=namespace.metadata["name"], name=certs_configmap_name),
         data={
-            "root-ca.crt": get_decoded_root_cert(),
+            "root-ca.crt": get_ca_bundle(),
         },
     )
 
@@ -109,7 +109,7 @@ monitoring_release = kubernetes.helm.v3.Release(
                             "storageClassName": config.storage_class_name,
                             "resources": {
                                 "requests": {
-                                    "storage": "16Gi",
+                                    "storage": "16Gi" if not config.use_minimal_storage else "1Gi",
                                 },
                             },
                         },
@@ -140,7 +140,7 @@ monitoring_release = kubernetes.helm.v3.Release(
                 "enabled": True,
                 "storageClassName": config.storage_class_name,
                 "accessModes": ["ReadWriteOnce"],
-                "size": "16Gi",
+                "size": "16Gi" if not config.use_minimal_storage else "1Gi",
             },
             "grafana.ini": {
                 "grafana_net": "",
@@ -190,7 +190,9 @@ monitoring_release = kubernetes.helm.v3.Release(
                     "configMap": certs_configmap_name,
                     "readOnly": True,
                 },
-            ],
+            ]
+            if config.root_ca_secret_name
+            else [],
         },
         "kubeApiServer": {
             "enabled": True,
@@ -232,14 +234,14 @@ monitoring_release = kubernetes.helm.v3.Release(
                 "replicas": 1,
                 "shards": 1,
                 "retenion": "10d",
-                "retentionSize": "60GiB",
+                "retentionSize": "60GiB" if not config.use_minimal_storage else "1GiB",
                 "storageSpec": {
                     "volumeClaimTemplate": {
                         "spec": {
                             "storageClassName": config.storage_class_name,
                             "resources": {
                                 "requests": {
-                                    "storage": "64Gi",
+                                    "storage": "64Gi" if not config.use_minimal_storage else "2Gi",
                                 },
                             },
                         },

@@ -12,7 +12,7 @@ from components.keda import keda_release
 from config import config
 from keycloak_iam.client import airflow_client
 from utils.airflow import airflow_roles_to_create, celery_executor_keda_query, get_webserver_config
-from utils.k8s import get_decoded_root_cert
+from utils.k8s import get_ca_bundle
 
 namespace = kubernetes.core.v1.Namespace(
     resource_name=config.airflow_ns_name,
@@ -35,7 +35,7 @@ logs_bucket = kubernetes.apiextensions.CustomResource(
         "storageClassName": config.bucket_storage_class_name,
         "additionalConfig": {
             "bucketMaxObjects": "10000",
-            "bucketMaxSize": "64G",
+            "bucketMaxSize": "64G" if not config.use_minimal_storage else "1G",
             "bucketLifecycle": json.dumps(
                 {
                     "Rules": [
@@ -129,7 +129,7 @@ if config.root_ca_secret_name:
         resource_name=f"{config.airflow_ns_name}-{certs_configmap_name}",
         metadata=kubernetes.meta.v1.ObjectMetaArgs(namespace=namespace.metadata["name"], name=certs_configmap_name),
         data={
-            "root-ca.pem": get_decoded_root_cert(),
+            "root-ca.pem": get_ca_bundle(),
         },
     )
 
@@ -274,7 +274,7 @@ airflow_release = helm.Release(
                 },
             },
             "persistence": {
-                "size": "16Gi",
+                "size": "16Gi" if not config.use_minimal_storage else "1Gi",
                 "storageClassName": config.storage_class_name,
             },
         },
@@ -294,7 +294,7 @@ airflow_release = helm.Release(
         "triggerer": {
             "replicas": 1,
             "persistence": {
-                "size": "16Gi",
+                "size": "16Gi" if not config.use_minimal_storage else "1Gi",
                 "storageClassName": config.storage_class_name,
             },
             "keda": {
@@ -317,7 +317,7 @@ airflow_release = helm.Release(
         },
         "redis": {
             "persistence": {
-                "size": "1Gi",
+                "size": "4Gi" if not config.use_minimal_storage else "1Gi",
                 "storageClassName": config.storage_class_name,
             },
             "resources": {
