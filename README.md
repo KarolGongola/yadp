@@ -21,8 +21,8 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 * Airflow -> Apache 2.0
 * Prometheus -> Apache 2.0
 * Grafana -> AGPLv3
-### Planned:
 * Apache Superset -> Apache 2.0
+### Planned:
 * DataHub -> Apache 2.0
 * Kafka -> Apache 2.0
 * VS Code Server -> MIT
