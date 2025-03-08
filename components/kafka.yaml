@@ -1,0 +1,97 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: main-cluster
+spec:
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 100Gi
+        deleteClaim: false
+        kraftMetadata: shared
+---
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: main-cluster
+  namespace: kafka
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  kafka:
+    version: 3.9.0
+    metadataVersion: 3.9-IV0
+    listeners:
+      # TODO: remove plain listener after testing
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+      - name: external
+        port: 9095
+        type: ingress
+        tls: true
+        configuration:
+          bootstrap:
+            host: bootstrap.kafka.yadp.localhost
+          hostTemplate: broker-{nodeId}.kafka.yadp.localhost
+          class: nginx
+        authentication:
+          type: oauth
+          validIssuerUri: https://keycloak.yadp.localhost/realms/yadp
+          jwksEndpointUri: https://keycloak.yadp.localhost/realms/yadp/protocol/openid-connect/certs
+          tokenEndpointUri: https://keycloak.yadp.localhost/realms/yadp/protocol/openid-connect/token
+          clientId: superset
+          clientSecret:
+            secretName: kafka-client-oauth-secret
+            key: client-secret
+          tlsTrustedCertificates:
+            - secretName: cert-secret
+              certificate: root-ca.pem
+
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-client
+  namespace: kafka
+spec:
+  containers:
+  - name: kafka-client
+    image: apache/kafka:3.9.0
+    command:
+    - sleep
+    - "infinity"
+    volumeMounts:
+    - name: ca-cert
+      mountPath: /tmp/ca-cert
+      readOnly: true
+  volumes:
+  - name: ca-cert
+    secret:
+      secretName: main-cluster-cluster-ca-cert

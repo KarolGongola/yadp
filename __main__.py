@@ -5,6 +5,7 @@ from components import (
     ceph,
     cert_manager,
     ingress_controller,
+    kafka,
     keda,
     keycloak,
     monitoring,

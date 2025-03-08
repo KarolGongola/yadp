@@ -42,6 +42,8 @@ class Config:
     monitoring_ns_name: str = "monitoring"
     superset_ns_name: str = "superset"
     superset_name: str = "superset"
+    kafka_ns_name: str = "kafka"
+    kafka_name: str = "kafka"
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",

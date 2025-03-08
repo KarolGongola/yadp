@@ -22,6 +22,7 @@ ingress_controller = kubernetes.helm.v3.Release(
     ),
     skip_crds=False,
     version="4.11.4",
+    values={"controller": {"extraArgs": {"enable-ssl-passthrough": "true"}}},
 )
 
 default_domain_ingress_name = "default-domain-redirect"

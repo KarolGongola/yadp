@@ -132,6 +132,13 @@ if config.root_ca_secret_name:
             "root-ca.pem": get_ca_bundle(),
         },
     )
+    root_ca_secret2 = kubernetes.core.v1.Secret(
+        resource_name="kafka-cert-secret",
+        metadata=kubernetes.meta.v1.ObjectMetaArgs(namespace="kafka", name="cert-secret"),
+        data={
+            "root-ca.pem": base64.b64encode(get_ca_bundle().encode()).decode(),
+        },
+    )
 
 airflow_release = helm.Release(
     opts=pulumi.ResourceOptions(depends_on=[keda_release, connections_secret]),

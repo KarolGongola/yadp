@@ -23,8 +23,10 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 * Grafana -> AGPLv3
 * Apache Superset -> Apache 2.0
 ### Planned:
+* Kafka+Strimzi -> Apache 2.0
+* Postgres -> PostgreSQL, similar to BSD or MIT
+* OpenSearch -> Apache 2.0
 * DataHub -> Apache 2.0
-* Kafka -> Apache 2.0
 * VS Code Server -> MIT
 * Spark -> Apache 2.0
 * Apache Unicorn -> Apache 2.0
