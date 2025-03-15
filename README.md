@@ -14,7 +14,7 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 * Pulumi -> Apache 2.0
 * Cert Manager -> Apache 2.0
 * Ingress Nginx -> Apache 2.0
-* Ceph+Rook -> LGPL+Apache 2.0
+* Ceph + Rook -> LGPL + Apache 2.0
 * Keycloak -> Apache 2.0
 * Trino -> Apache 2.0
 * KEDA -> Apache 2.0
@@ -22,8 +22,8 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 * Prometheus -> Apache 2.0
 * Grafana -> AGPLv3
 * Apache Superset -> Apache 2.0
+* Kafka + Strimzi -> Apache 2.0
 ### Planned:
-* Kafka+Strimzi -> Apache 2.0
 * Postgres -> PostgreSQL, similar to BSD or MIT
 * OpenSearch -> Apache 2.0
 * DataHub -> Apache 2.0
@@ -32,8 +32,8 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
 * Apache Unicorn -> Apache 2.0
 * Flink -> Apache 2.0
 * Fluentd -> Apache 2.0
-* Starrocks -> Apache 2.0
 ### To consider:
+* Starrocks -> Apache 2.0
 * Apache Solr -> Apache 2.0
 * Apache Polaris -> Apache 2.0
 * Lakekeeper -> Apache 2.0

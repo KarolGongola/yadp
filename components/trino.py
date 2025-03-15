@@ -67,8 +67,33 @@ trino_release = helm.Release(
                     "enable": True,
                 },
             },
-            "workers": 1,
+            "workers": 0,
             "coordinatorExtraConfig": trino_client.client_secret.apply(get_coordinator_extra_config),
+        },
+        "worker": {
+            "resources": {
+                "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi",
+                },
+                "limits": {
+                    "cpu": "500m",
+                    "memory": "1024Mi",
+                },
+            },
+            "jvm": {"maxHeapSize": "512M"},
+            "config": {
+                "query": {
+                    "maxMemoryPerNode": "256MB",
+                }
+            },
+        },
+        "keda": {
+            "enabled": True,
+            "pollInterval": "30s",
+            "coolDownPeriod": "300s",
+            "minReplicaCount": 0,
+            "maxReplicaCount": 4,
         },
         "additionalConfigProperties": [
             "internal-communication.shared-secret=test",
@@ -81,6 +106,22 @@ trino_release = helm.Release(
             f"io.trino.server.ui.OAuth2WebUiAuthenticationFilter={config.log_level.upper()}",
         ],
         "coordinator": {
+            "resources": {
+                "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi",
+                },
+                "limits": {
+                    "cpu": "500m",
+                    "memory": "1024Mi",
+                },
+            },
+            "jvm": {"maxHeapSize": "512M"},
+            "config": {
+                "query": {
+                    "maxMemoryPerNode": "256MB",
+                }
+            },
             "additionalJVMConfig": [
                 "-Djavax.net.ssl.trustStore=etc/certs/root-ca.pem",
             ],
