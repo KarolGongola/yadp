@@ -1,4 +1,5 @@
 import base64
+from pathlib import Path
 
 import pulumi
 import pulumi_kubernetes as kubernetes
@@ -60,6 +61,19 @@ external_certificate = kubernetes.apiextensions.CustomResource(
             "organizations": [config.realm_name],
         },
         "dnsNames": [bootstrap_host] + [broker_host_tamplate.format(nodeId=i) for i in range(config.kafka_broker_replicas)],
+    },
+)
+
+kafka_metrics_config_name = f"{config.kafka_name}-kafka-metrics"
+kafka_metrics_config_key = "kafka-metrics-config.yml"
+kafka_metrics_config = kubernetes.core.v1.ConfigMap(
+    resource_name=f"{config.kafka_ns_name}-{config.kafka_name}-kafka-metrics",
+    metadata=kubernetes.meta.v1.ObjectMetaArgs(
+        namespace=config.kafka_ns_name,
+        name=kafka_metrics_config_name,
+    ),
+    data={
+        kafka_metrics_config_key: (Path(__file__).parent / "utils" / "kafka-prometheus-config.yml").open().read(),
     },
 )
 
@@ -148,6 +162,15 @@ kafka_cluster = kubernetes.apiextensions.CustomResource(
         "kafka": {
             "version": "3.9.0",
             "metadataVersion": "3.9-IV0",
+            "metricsConfig": {
+                "type": "jmxPrometheusExporter",
+                "valueFrom": {
+                    "configMapKeyRef": {
+                        "name": kafka_metrics_config.metadata["name"],
+                        "key": kafka_metrics_config_key,
+                    }
+                },
+            },
             "listeners": [
                 {
                     "name": "internal",
@@ -184,5 +207,101 @@ kafka_cluster = kubernetes.apiextensions.CustomResource(
             },
         },
         "entityOperator": {"topicOperator": {}, "userOperator": {}},
+    },
+)
+
+operator_pod_monitor = kubernetes.apiextensions.CustomResource(
+    resource_name=f"{config.kafka_ns_name}-{config.kafka_name}-operator-metrics",
+    api_version="monitoring.coreos.com/v1",
+    kind="PodMonitor",
+    metadata={
+        "name": f"{config.kafka_name}-operator-metrics",
+        "namespace": config.kafka_ns_name,
+        "labels": {"app": "strimzi"},
+    },
+    spec={
+        "selector": {
+            "matchLabels": {"strimzi.io/kind": "cluster-operator"},
+        },
+        "namespaceSelector": {
+            "matchNames": [config.kafka_ns_name],
+        },
+        "podMetricsEndpoints": [
+            {
+                "path": "/metrics",
+                "port": "http",
+            },
+        ],
+    },
+)
+
+kafka_resources_pod_monitor = kubernetes.apiextensions.CustomResource(
+    resource_name=f"{config.kafka_ns_name}-{config.kafka_name}-resources-metrics",
+    api_version="monitoring.coreos.com/v1",
+    kind="PodMonitor",
+    metadata={
+        "name": f"{config.kafka_name}-resources-metrics",
+        "namespace": config.kafka_ns_name,
+        "labels": {"app": "strimzi"},
+    },
+    spec={
+        "selector": {
+            "matchExpressions": [
+                {
+                    "key": "strimzi.io/kind",
+                    "operator": "In",
+                    "values": ["Kafka", "KafkaConnect", "KafkaMirrorMaker", "KafkaMirrorMaker2"],
+                },
+            ],
+        },
+        "namespaceSelector": {
+            "matchNames": [config.kafka_ns_name],
+        },
+        "podMetricsEndpoints": [
+            {
+                "path": "/metrics",
+                "port": "tcp-prometheus",
+                "relabelings": [
+                    {
+                        "separator": ";",
+                        "regex": "__meta_kubernetes_pod_label_(strimzi_io_.+)",
+                        "replacement": "$1",
+                        "action": "labelmap",
+                    },
+                    {
+                        "sourceLabels": ["__meta_kubernetes_namespace"],
+                        "separator": ";",
+                        "regex": "(.*)",
+                        "targetLabel": "namespace",
+                        "replacement": "$1",
+                        "action": "replace",
+                    },
+                    {
+                        "sourceLabels": ["__meta_kubernetes_pod_name"],
+                        "separator": ";",
+                        "regex": "(.*)",
+                        "targetLabel": "kubernetes_pod_name",
+                        "replacement": "$1",
+                        "action": "replace",
+                    },
+                    {
+                        "sourceLabels": ["__meta_kubernetes_pod_node_name"],
+                        "separator": ";",
+                        "regex": "(.*)",
+                        "targetLabel": "node_name",
+                        "replacement": "$1",
+                        "action": "replace",
+                    },
+                    {
+                        "sourceLabels": ["__meta_kubernetes_pod_host_ip"],
+                        "separator": ";",
+                        "regex": "(.*)",
+                        "targetLabel": "node_ip",
+                        "replacement": "$1",
+                        "action": "replace",
+                    },
+                ],
+            },
+        ],
     },
 )
