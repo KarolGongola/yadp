@@ -73,7 +73,7 @@ kafka_metrics_config = kubernetes.core.v1.ConfigMap(
         name=kafka_metrics_config_name,
     ),
     data={
-        kafka_metrics_config_key: (Path(__file__).parent / "utils" / "kafka-prometheus-config.yml").open().read(),
+        kafka_metrics_config_key: (Path(__file__).parent.parent / "utils" / "kafka-prometheus-config.yml").open().read(),
     },
 )
 
