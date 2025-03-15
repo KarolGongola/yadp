@@ -40,15 +40,8 @@ superset_release = kubernetes.helm.v3.Release(
     version="0.14.0",
     # https://github.com/apache/superset/blob/master/helm/superset/values.yaml
     values={
-        "resources": {
-            "requests": {
-                "cpu": "100m",
-                "memory": "256Mi",
-            },
-            "limits": {
-                "cpu": "1000m",
-                "memory": "2Gi",
-            },
+        "serviceAccount": {
+            "create": True,
         },
         "resources": {
             "requests": {
