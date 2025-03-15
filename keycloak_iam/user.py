@@ -7,7 +7,7 @@ from keycloak_iam.realm import main_realm
 
 guest_test_email = "guest.test@example.com"
 guest_test_user = keycloak.User(
-    resource_name=guest_test_email,
+    resource_name=f"{config.realm_name}-{guest_test_email}",
     opts=pulumi.ResourceOptions(provider=master_provider),
     realm_id=main_realm.realm,
     username=guest_test_email,

@@ -73,23 +73,23 @@ offline_access_role = get_realm_role(
     keycloak_provider=master_provider,
 )
 
-admin_role_name = "admin"
-admin_role = keycloak.Role(
-    resource_name=admin_role_name,
+keycloak_admin_role_name = "keycloak-admin"
+keycloak_admin_role = keycloak.Role(
+    resource_name=keycloak_admin_role_name,
     opts=pulumi.ResourceOptions(provider=master_provider),
     realm_id=main_realm.realm,
-    name=admin_role_name,
-    description="YADP Admin",
+    name=keycloak_admin_role_name,
+    description="YADP Keycloak Admin",
     composite_roles=list(get_role_ids(realm_id=main_realm.realm, roles=all_built_in_client_roles, keycloak_provider=master_provider)),
 )
 
-trusted_guest_role_name = "trusted-guest"
-trusted_guest_role = keycloak.Role(
-    resource_name=trusted_guest_role_name,
+keycloak_trusted_guest_role_name = "keycloak-trusted-guest"
+keycloak_trusted_guest_role = keycloak.Role(
+    resource_name=keycloak_trusted_guest_role_name,
     opts=pulumi.ResourceOptions(provider=master_provider),
     realm_id=main_realm.realm,
-    name=trusted_guest_role_name,
-    description="YADP Trusted Guest",
+    name=keycloak_trusted_guest_role_name,
+    description="YADP Keycloak Trusted Guest",
     composite_roles=list(
         get_role_ids(realm_id=main_realm.realm, roles=trusted_guest_built_in_client_roles, keycloak_provider=master_provider)
     ),
@@ -167,14 +167,11 @@ superset_trusted_viewer_role = keycloak.Role(
     description="YADP Superset Trusted Viewer",
 )
 
-default_roles = keycloak.DefaultRoles(
-    resource_name="default-roles",
+kafka_admin_role_name = "kafka-admin"
+kafka_admin_role = keycloak.Role(
+    resource_name=kafka_admin_role_name,
     opts=pulumi.ResourceOptions(provider=master_provider),
     realm_id=main_realm.realm,
-    default_roles=[
-        "offline_access",
-        "uma_authorization",
-        airflow_viewer_role.name,
-        grafana_viewer_role.name,
-    ],
+    name=kafka_admin_role_name,
+    description="YADP Kafka Admin",
 )

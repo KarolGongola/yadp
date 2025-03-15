@@ -14,7 +14,9 @@ from components import (
 )
 from keycloak_iam import (
     client,
+    group,
     idp,
+    kafka_authorization,
     realm,
     role,
     user,
