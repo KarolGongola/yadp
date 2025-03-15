@@ -5,6 +5,7 @@ from components import (
     ceph,
     cert_manager,
     ingress_controller,
+    kafka,
     keda,
     keycloak,
     monitoring,
@@ -13,7 +14,9 @@ from components import (
 )
 from keycloak_iam import (
     client,
+    group,
     idp,
+    kafka_authorization,
     realm,
     role,
     user,

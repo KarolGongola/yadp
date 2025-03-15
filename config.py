@@ -42,6 +42,9 @@ class Config:
     monitoring_ns_name: str = "monitoring"
     superset_ns_name: str = "superset"
     superset_name: str = "superset"
+    kafka_ns_name: str = "kafka"
+    kafka_name: str = "kafka"
+    kafka_broker_replicas: int = 1
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -80,6 +83,10 @@ class Config:
     @property
     def superset_hostname(self) -> str:
         return f"superset.{self.domain_name}"
+
+    @property
+    def kafka_hostname(self) -> str:
+        return f"kafka.{self.domain_name}"
 
 
 @dataclass(kw_only=True)

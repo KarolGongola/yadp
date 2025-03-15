@@ -82,3 +82,30 @@ def assign_roles_to_exiting_users(realm_id: str, provider: keycloak.Provider, ro
                 pulumi.log.warn(f"Failed to assign role to user {username}: {e}")
             else:
                 raise e
+
+
+def filter_existing_users(users_list: list[str], realm_id: str, provider: keycloak.Provider) -> list[str]:
+    """Filter a list of usernames to include only existing users in the realm."""
+    # We'll create a pulumi Output for each username
+    username_outputs = []
+
+    for username in users_list:
+        # Create a dynamic Output that resolves to the username or None
+        def create_check_for_user(username: str) -> pulumi.Output[str]:
+            def check_user_exists() -> str | None:
+                try:
+                    # Try to get the user - this will throw an error if the user doesn't exist
+                    keycloak.get_user(realm_id=realm_id, username=username, opts=pulumi.InvokeOptions(provider=provider))
+                    return username
+                except Exception as e:
+                    pulumi.log.warn(f"User '{username}' not found in Keycloak: {str(e)}")
+                    return None
+
+            # Create an Output from this function
+            return pulumi.Output.from_input(check_user_exists())
+
+        # Add this username's Output to our list
+        username_outputs.append(create_check_for_user(username))
+
+    # Combine all the Outputs and filter out Nones
+    return pulumi.Output.all(*username_outputs).apply(lambda usernames: [u for u in usernames if u is not None])

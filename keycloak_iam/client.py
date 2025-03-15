@@ -89,3 +89,41 @@ superset_client = keycloak.openid.Client(
         provider=master_provider,
     ),
 )
+
+kafka_admin_client_id = "kafka-admin"
+kafka_admin_client = keycloak.openid.Client(
+    resource_name=kafka_admin_client_id,
+    name="Kafka Admin",
+    realm_id=main_realm.realm,
+    client_id=kafka_admin_client_id,
+    access_type="CONFIDENTIAL",
+    standard_flow_enabled=False,
+    service_accounts_enabled=True,
+    direct_access_grants_enabled=True,
+    opts=pulumi.ResourceOptions(
+        provider=master_provider,
+    ),
+)
+
+kafka_client_id = "kafka"
+kafka_client = keycloak.openid.Client(
+    resource_name=kafka_client_id,
+    name="Kafka",
+    realm_id=main_realm.realm,
+    client_id=kafka_client_id,
+    access_type="CONFIDENTIAL",
+    standard_flow_enabled=True,
+    service_accounts_enabled=True,
+    base_url=f"https://{config.kafka_hostname}",
+    root_url=f"https://{config.kafka_hostname}",
+    valid_redirect_uris=["/*"],
+    valid_post_logout_redirect_uris=["/*"],
+    authorization=keycloak.openid.ClientAuthorizationArgs(
+        allow_remote_resource_management=True,
+        policy_enforcement_mode="ENFORCING",
+        decision_strategy="AFFIRMATIVE",
+    ),
+    opts=pulumi.ResourceOptions(
+        provider=master_provider,
+    ),
+)
