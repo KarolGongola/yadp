@@ -20,6 +20,14 @@ def get_decoded_root_cert() -> str:
 
 
 @lru_cache
+def get_binary_truststore() -> bytes:
+    kubernetes.config.load_kube_config(context=config.k8s_context)
+    v1 = kubernetes.client.CoreV1Api()
+    secret = v1.read_namespaced_secret(name=config.root_ca_secret_name, namespace=config.cert_manager_ns_name)
+    return secret.data["truststore.jks"]
+
+
+@lru_cache
 def get_ca_bundle() -> str:
     """
     Return a CA bundle containing both the decoded root certificate

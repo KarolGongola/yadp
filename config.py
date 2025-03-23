@@ -45,6 +45,8 @@ class Config:
     kafka_ns_name: str = "kafka"
     kafka_name: str = "kafka"
     kafka_broker_replicas: int = 1
+    kafka_ui_ns_name: str = "kafka-ui"
+    kafka_ui_name: str = "kafka-ui"
     admin_users: list[str] = field(
         default_factory=lambda: [
             "karol.gongola@gmail.com",
@@ -87,6 +89,10 @@ class Config:
     @property
     def kafka_hostname(self) -> str:
         return f"kafka.{self.domain_name}"
+
+    @property
+    def kafka_ui_hostname(self) -> str:
+        return f"kafka-ui.{self.domain_name}"
 
 
 @dataclass(kw_only=True)

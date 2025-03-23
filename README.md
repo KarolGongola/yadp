@@ -123,6 +123,7 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
         openssl req -x509 -new -nodes -key ~/yadp-certs/rootCA.key -sha256 -days 1024 -out ~/yadp-certs/rootCA.crt
         sudo cp ~/yadp-certs/rootCA.crt /usr/local/share/ca-certificates/yadp-rootCA.crt
         sudo update-ca-certificates
+        keytool -import -file ~/yadp-certs/rootCA.crt -alias root-ca -keystore ~/yadp-certs/truststore.jks -storepass not-needed-pass -noprompt
         ```
     * Add root ca to local k3s
         ```bash
@@ -138,6 +139,7 @@ In this repo you can see how to run it at local kubernetes (k3s) and at my hybri
         data:
           tls.crt: $(cat ~/yadp-certs/rootCA.crt | base64 | tr -d '\n')
           tls.key: $(cat ~/yadp-certs/rootCA.key | base64 | tr -d '\n')
+          truststore.jks: $(cat ~/yadp-certs/truststore.jks | base64 | tr -d '\n')
         EOF
 
         ```
